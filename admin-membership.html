@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natha Yoga | Membership Admin</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        yoga: { 500: '#8b5cf6', 600: '#7c3aed', 400: '#a78bfa' },
+                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        body { background-color: #0f172a; color: white; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .yoga-gradient { background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); }
+    </style>
+</head>
+<body class="font-sans min-h-screen" x-data="adminMembership()">
+
+    <!-- Navigation -->
+    <nav class="glass sticky top-0 z-40 p-6 flex justify-between items-center border-b border-white/5">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 yoga-gradient rounded-xl flex items-center justify-center font-bold text-xl shadow-lg">N</div>
+            <h2 class="font-display font-bold text-lg leading-none">Membership Admin</h2>
+        </div>
+        <div class="flex gap-4">
+            <a href="admin.html" class="text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-white transition-all">Booking Admin</a>
+            <button @click="openActivateModal()" class="bg-yoga-500 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest">+ Activate Package</button>
+        </div>
+    </nav>
+
+    <main class="p-6 max-w-7xl mx-auto w-full space-y-8">
+        
+        <!-- Stats Cards -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass p-6 rounded-[2rem]">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Active Members</p>
+                <h3 class="text-3xl font-display font-bold text-white" x-text="stats.total_active">0</h3>
+            </div>
+            <div class="glass p-6 rounded-[2rem]">
+                <p class="text-[10px] font-bold text-yoga-400 uppercase tracking-widest mb-1">Package Revenue</p>
+                <h3 class="text-3xl font-display font-bold text-white" x-text="formatCurrency(stats.total_revenue)">Rp 0</h3>
+            </div>
+            <div class="glass p-6 rounded-[2rem]">
+                <p class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest mb-1">Expiring Soon</p>
+                <h3 class="text-3xl font-display font-bold text-white" x-text="stats.expiring_soon">0</h3>
+            </div>
+            <div class="glass p-6 rounded-[2rem]">
+                <p class="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-1">Exhausted Packages</p>
+                <h3 class="text-3xl font-display font-bold text-white" x-text="stats.exhausted">0</h3>
+            </div>
+        </section>
+
+        <!-- Search & Filter -->
+        <section class="flex flex-col md:flex-row gap-4 justify-between items-center">
+            <div class="flex gap-2 w-full md:w-auto">
+                <button @click="filter = 'active'" :class="filter === 'active' ? 'bg-yoga-500' : 'glass'" class="px-6 py-3 rounded-xl text-xs font-bold transition-all">Active</button>
+                <button @click="filter = 'exhausted'" :class="filter === 'exhausted' ? 'bg-red-500' : 'glass'" class="px-6 py-3 rounded-xl text-xs font-bold transition-all">Exhausted</button>
+                <button @click="filter = 'all'" :class="filter === 'all' ? 'bg-gray-600' : 'glass'" class="px-6 py-3 rounded-xl text-xs font-bold transition-all">All</button>
+            </div>
+            <input type="text" x-model="search" placeholder="Cari nama atau nomor WA..." class="w-full md:w-64 bg-dark-800 border border-gray-700 rounded-xl px-6 py-3 text-sm focus:ring-2 focus:ring-yoga-500 outline-none">
+        </section>
+
+        <!-- Memberships Table -->
+        <section class="glass rounded-[2.5rem] overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-white/5 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                            <th class="px-8 py-6">Member</th>
+                            <th class="px-8 py-6">Package</th>
+                            <th class="px-8 py-6 text-center">Sessions Left</th>
+                            <th class="px-8 py-6 text-center">Expires</th>
+                            <th class="px-8 py-6 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        <template x-for="m in filteredMemberships" :key="m.id">
+                            <tr class="hover:bg-white/5 transition-all group">
+                                <td class="px-8 py-6">
+                                    <p class="font-bold text-sm" x-text="m.user_name"></p>
+                                    <p class="text-[10px] text-gray-500" x-text="m.user_phone"></p>
+                                </td>
+                                <td class="px-8 py-6">
+                                    <span class="text-xs font-bold" x-text="m.package_title"></span>
+                                    <p class="text-[10px] text-gray-500 uppercase" x-text="m.membership_type"></p>
+                                </td>
+                                <td class="px-8 py-6 text-center">
+                                    <span :class="m.remaining_sessions <= 1 ? 'text-red-500 font-bold' : 'text-white'" class="text-lg font-display font-bold" x-text="m.membership_type === 'unlimited' ? '∞' : m.remaining_sessions"></span>
+                                </td>
+                                <td class="px-8 py-6 text-center">
+                                    <p class="text-xs" :class="isExpiring(m.expired_at) ? 'text-yellow-500' : ''" x-text="formatDate(m.expired_at)"></p>
+                                </td>
+                                <td class="px-8 py-6 text-right">
+                                    <div class="flex justify-end gap-2">
+                                        <button @click="editMembership(m)" class="bg-dark-700 hover:bg-yoga-500 px-3 py-2 rounded-lg text-[10px] font-bold transition-all">Manage</button>
+                                        <a :href="`https://wa.me/${m.user_phone.replace(/[^0-9]/g, '')}`" target="_blank" class="bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white px-3 py-2 rounded-lg text-[10px] font-bold transition-all">Chat</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        function adminMembership() {
+            return {
+                memberships: [],
+                packages: [],
+                stats: { total_active: 0, total_revenue: 0, expiring_soon: 0, exhausted: 0 },
+                search: '',
+                filter: 'active',
+                loading: false,
+
+                async init() {
+                    if (localStorage.getItem('yoga_admin_auth') !== 'true') {
+                        window.location.href = 'admin.html';
+                        return;
+                    }
+                    await Promise.all([this.loadMemberships(), this.loadPackages()]);
+                    this.calculateStats();
+                },
+
+                async loadMemberships() {
+                    const res = await fetch(`${API.URL}?action=user_memberships&phone=all`).then(r => r.json());
+                    if (res.success) this.memberships = res.data;
+                },
+
+                async loadPackages() {
+                    const res = await fetch(`${API.URL}?action=membership_packages`).then(r => r.json());
+                    if (res.success) this.packages = res.data;
+                },
+
+                calculateStats() {
+                    const now = new Date();
+                    const nextWeek = new Date();
+                    nextWeek.setDate(now.getDate() + 7);
+
+                    this.stats.total_active = this.memberships.filter(m => m.status === 'active').length;
+                    this.stats.exhausted = this.memberships.filter(m => m.status === 'exhausted').length;
+                    this.stats.expiring_soon = this.memberships.filter(m => {
+                        const exp = new Date(m.expired_at);
+                        return m.status === 'active' && exp > now && exp < nextWeek;
+                    }).length;
+                },
+
+                get filteredMemberships() {
+                    return this.memberships.filter(m => {
+                        const matchSearch = m.user_name.toLowerCase().includes(this.search.toLowerCase()) || m.user_phone.includes(this.search);
+                        const matchFilter = this.filter === 'all' || m.status === this.filter;
+                        return matchSearch && matchFilter;
+                    });
+                },
+
+                async openActivateModal() {
+                    const { value: formValues } = await Swal.fire({
+                        title: 'Activate Membership',
+                        background: '#1e293b', color: '#fff',
+                        html: `
+                            <div class="space-y-4 text-left">
+                                <div>
+                                    <label class="text-[10px] uppercase font-bold text-gray-400">Nama Peserta</label>
+                                    <input id="swal-name" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 outline-none focus:ring-2 focus:ring-yoga-500">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] uppercase font-bold text-gray-400">Nomor WhatsApp</label>
+                                    <input id="swal-phone" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 outline-none focus:ring-2 focus:ring-yoga-500" placeholder="0812...">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] uppercase font-bold text-gray-400">Pilih Paket</label>
+                                    <select id="swal-package" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 outline-none focus:ring-2 focus:ring-yoga-500">
+                                        ${this.packages.map(p => `<option value="${p.id}">${p.title} - ${this.formatCurrency(p.price)}</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                        `,
+                        focusConfirm: false,
+                        showCancelButton: true,
+                        confirmButtonText: 'Aktifkan Sekarang',
+                        confirmButtonColor: '#8b5cf6',
+                        preConfirm: () => {
+                            return {
+                                user_name: document.getElementById('swal-name').value,
+                                user_phone: document.getElementById('swal-phone').value,
+                                package_id: document.getElementById('swal-package').value,
+                                action: 'create_membership'
+                            }
+                        }
+                    });
+
+                    if (formValues) {
+                        if (!formValues.user_name || !formValues.user_phone) return Swal.fire('Error', 'Nama dan No WA wajib diisi', 'error');
+                        
+                        this.loading = true;
+                        try {
+                            const res = await fetch(API.URL, { method: 'POST', body: JSON.stringify(formValues) }).then(r => r.json());
+                            if (res.success) {
+                                Swal.fire('Berhasil!', 'Membership peserta telah diaktifkan.', 'success');
+                                await this.loadMemberships();
+                                this.calculateStats();
+                            }
+                        } finally { this.loading = false; }
+                    }
+                },
+
+                isExpiring(date) {
+                    const exp = new Date(date);
+                    const now = new Date();
+                    const week = new Date();
+                    week.setDate(now.getDate() + 7);
+                    return exp > now && exp < week;
+                },
+
+                formatDate(iso) {
+                    return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                },
+
+                formatCurrency(val) {
+                    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

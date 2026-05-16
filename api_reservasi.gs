@@ -4,8 +4,10 @@
  */
 
 const SS = SpreadsheetApp.getActiveSpreadsheet();
-const SHEET_CLASSES = SS.getSheetByName("classes");
-const SHEET_RESERVATIONS = SS.getSheetByName("reservations");
+const SHEET_CLASSES = getOrCreateSheet("classes");
+const SHEET_RESERVATIONS = getOrCreateSheet("reservations");
+const SHEET_MEMBERSHIP_PACKAGES = getOrCreateSheet("membership_packages");
+const SHEET_USER_MEMBERSHIPS = getOrCreateSheet("user_memberships");
 
 /**
  * GET Handler
@@ -49,10 +51,184 @@ function doGet(e) {
     if (action === "dashboard_stats") {
       return handleGetDashboardStats();
     }
+    if (action === "membership_packages") {
+      return responseJSON({ success: true, data: getSheetData(SHEET_MEMBERSHIP_PACKAGES) });
+    }
+    if (action === "user_memberships") {
+      return handleGetUserMemberships(e.parameter.phone);
+    }
+    if (action === "membership_stats") {
+      return handleGetMembershipStats();
+    }
     return responseJSON({ success: false, message: "Action not found" });
   } catch (err) {
     return responseJSON({ success: false, message: err.toString() });
   }
+}
+
+/**
+ * Handle POST - Booking & Create Membership
+ */
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    
+    // ACTION: Create Membership (Admin only)
+    if (data.action === "create_membership") {
+      return handleCreateMembership(data);
+    }
+    
+    // ACTION: Booking Class
+    if (!data.name || !data.phone || !data.class_id) {
+      return responseJSON({ success: false, message: "Missing required fields" });
+    }
+
+    const classes = getSheetData(SHEET_CLASSES);
+    const cls = classes.find(c => c.id == data.class_id);
+    if (!cls) return responseJSON({ success: false, message: "Class not found" });
+    if (cls.quota <= 0) return responseJSON({ success: false, message: "Class full" });
+
+    // CHECK MEMBERSHIP
+    let bookingSource = "pay_per_class";
+    const membership = findActiveMembership(data.phone);
+    
+    if (membership) {
+      if (membership.type === "session") {
+        if (membership.remaining > 0) {
+          bookingSource = "membership";
+          updateMembershipSession(membership.id, -1);
+        }
+      } else if (membership.type === "unlimited") {
+        bookingSource = "membership";
+      }
+    }
+
+    const bookingId = "BK-" + Utilities.getUuid().substring(0, 8).toUpperCase();
+    SHEET_RESERVATIONS.appendRow([
+      bookingId,
+      data.class_id,
+      data.name,
+      data.phone,
+      "pending",
+      new Date(),
+      "pending", // payment_status
+      bookingSource // booking_source
+    ]);
+
+    // Update Class Quota
+    updateQuota(data.class_id, -1);
+
+    return responseJSON({
+      success: true,
+      booking_id: bookingId,
+      source: bookingSource
+    });
+  } catch (err) {
+    return responseJSON({ success: false, message: err.toString() });
+  }
+}
+
+/**
+ * Membership Helpers
+ */
+function findActiveMembership(phone) {
+  const data = SHEET_USER_MEMBERSHIPS.getDataRange().getValues();
+  const headers = data[0];
+  const now = new Date();
+  
+  // Find last active for this phone
+  const row = data.slice(1).reverse().find(r => {
+    const isPhone = String(r[2]) === String(phone);
+    const isStatus = r[8] === "active";
+    const isNotExpired = new Date(r[7]) > now;
+    return isPhone && isStatus && isNotExpired;
+  });
+  
+  if (!row) return null;
+  
+  return {
+    id: row[0],
+    type: row[4],
+    remaining: row[5]
+  };
+}
+
+function updateMembershipSession(id, change) {
+  const data = SHEET_USER_MEMBERSHIPS.getDataRange().getValues();
+  const rowIndex = data.findIndex(r => r[0] === id);
+  if (rowIndex === -1) return;
+  
+  const current = data[rowIndex][5];
+  const newVal = current + change;
+  SHEET_USER_MEMBERSHIPS.getRange(rowIndex + 1, 6).setValue(newVal);
+  
+  if (newVal <= 0 && data[rowIndex][4] === "session") {
+     SHEET_USER_MEMBERSHIPS.getRange(rowIndex + 1, 9).setValue("exhausted");
+  }
+}
+
+function handleCreateMembership(data) {
+  const pkgData = getSheetData(SHEET_MEMBERSHIP_PACKAGES);
+  const pkg = pkgData.find(p => p.id == data.package_id);
+  if (!pkg) return responseJSON({ success: false, message: "Package not found" });
+  
+  const id = "MB-" + Utilities.getUuid().substring(0, 8).toUpperCase();
+  const start = new Date();
+  const end = new Date();
+  end.setDate(start.getDate() + pkg.duration_days);
+  
+  SHEET_USER_MEMBERSHIPS.appendRow([
+    id,
+    data.user_name,
+    data.user_phone,
+    data.package_id,
+    pkg.type,
+    pkg.total_sessions,
+    start,
+    end,
+    "active"
+  ]);
+  
+  return responseJSON({ success: true, message: "Membership activated" });
+}
+
+function handleGetUserMemberships(phone) {
+  if (!phone) return responseJSON({ success: false, message: "Phone required" });
+  const data = getSheetData(SHEET_USER_MEMBERSHIPS);
+  const packages = getSheetData(SHEET_MEMBERSHIP_PACKAGES);
+  
+  const userList = data.filter(m => String(m.user_phone) === String(phone)).map(m => {
+    const pkg = packages.find(p => p.id == m.package_id);
+    return { ...m, package_title: pkg ? pkg.title : "Package" };
+  });
+  
+  return responseJSON({ success: true, data: userList });
+}
+
+/**
+ * Get Membership Statistics
+ */
+function handleGetMembershipStats() {
+  const data = getSheetData(SHEET_USER_MEMBERSHIPS);
+  const packages = getSheetData(SHEET_MEMBERSHIP_PACKAGES);
+  const now = new Date();
+  const nextWeek = new Date();
+  nextWeek.setDate(now.getDate() + 7);
+  
+  const stats = {
+    total_active: data.filter(m => m.status === "active" && new Date(m.expired_at) > now).length,
+    exhausted: data.filter(m => m.status === "exhausted" || (m.membership_type === "session" && m.remaining_sessions <= 0)).length,
+    expiring_soon: data.filter(m => {
+      const exp = new Date(m.expired_at);
+      return m.status === "active" && exp > now && exp < nextWeek;
+    }).length,
+    total_revenue: data.reduce((acc, m) => {
+       const pkg = packages.find(p => p.id == m.package_id);
+       return acc + (pkg ? pkg.price : 0);
+    }, 0)
+  };
+  
+  return responseJSON({ success: true, data: stats });
 }
 
 /**
