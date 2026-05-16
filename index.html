@@ -1,11 +1,16 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Natha Yoga | Premium Studio Reservation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Natha Yoga | Premium Wellness Studio</title>
     
-    <!-- Fonts -->
+    <!-- PWA Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3048/3048383.png">
+    
+    <!-- Fonts: Outfit & Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -15,28 +20,17 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
-                        display: ['Outfit', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
                     colors: {
-                        yoga: {
-                            50: '#f5f3ff',
-                            100: '#ede9fe',
-                            200: '#ddd6fe',
-                            300: '#c4b5fd',
-                            400: '#a78bfa',
-                            500: '#8b5cf6',
-                            600: '#7c3aed',
-                            700: '#6d28d9',
-                            800: '#5b21b6',
-                            900: '#4c1d95',
-                        }
+                        yoga: { 50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd', 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9', 800: '#5b21b6', 900: '#4c1d95' },
+                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' }
                     }
                 }
             }
@@ -45,134 +39,192 @@
 
     <style>
         [x-cloak] { display: none !important; }
-        body { background-color: #0f172a; color: white; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .yoga-gradient { background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); }
-        .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
-        @keyframes loading { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .dark .glass { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .yoga-gradient { background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%); }
+        .shimmer { background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.05) 50%, transparent 75%); background-size: 200% 100%; animation: shimmer 2s infinite; }
+        @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+        
+        /* App Like Transitions */
+        .page-enter { animation: slideUp 0.4s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .bottom-nav-shadow { box-shadow: 0 -4px 20px -5px rgba(0,0,0,0.3); }
     </style>
 </head>
-<body class="min-h-screen selection:bg-yoga-500/30" x-data="yogaApp()">
+<body class="bg-yoga-50 dark:bg-dark-900 text-dark-800 dark:text-gray-100 transition-colors duration-500 font-sans selection:bg-yoga-500/20" x-data="yogaApp()">
 
-    <!-- Header Navigation -->
-    <nav class="fixed top-0 inset-x-0 z-40 px-6 py-4">
-        <div class="max-w-5xl mx-auto flex justify-between items-center glass rounded-2xl px-6 py-3">
-            <div class="flex items-center gap-2 cursor-pointer" @click="view = 'home'; loadClasses()">
-                <div class="w-8 h-8 yoga-gradient rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-yoga-500/30">N</div>
-                <span class="font-display font-bold text-xl tracking-tight">Natha Yoga</span>
+    <!-- Top Bar -->
+    <nav class="fixed top-0 inset-x-0 z-50 px-4 py-3 pointer-events-none">
+        <div class="max-w-xl mx-auto flex justify-between items-center glass rounded-2xl px-5 py-2 pointer-events-auto shadow-sm">
+            <div class="flex items-center gap-2 cursor-pointer" @click="view = 'home'">
+                <div class="w-8 h-8 yoga-gradient rounded-xl flex items-center justify-center font-bold text-white shadow-lg">N</div>
+                <span class="font-display font-bold text-lg tracking-tight">Natha Yoga</span>
             </div>
-            <div class="flex items-center gap-4">
-                <button @click="view = 'my-bookings'" class="text-sm font-semibold hover:text-yoga-400 transition-colors" :class="view === 'my-bookings' ? 'text-yoga-400' : 'text-gray-300'">My Bookings</button>
-            </div>
+            <button @click="toggleTheme()" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-yoga-500/10 transition-all text-xl">
+                <span x-show="!isDark">🌙</span>
+                <span x-show="isDark">☀️</span>
+            </button>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <header class="pt-32 pb-12 px-6 text-center">
-        <div class="max-w-3xl mx-auto">
-            <h1 class="text-4xl md:text-6xl font-display font-bold mb-6 leading-tight">
-                Temukan Ketenangan <br> 
-                <span class="bg-gradient-to-r from-yoga-400 to-pink-400 bg-clip-text text-transparent">Di Setiap Gerakan</span>
-            </h1>
-            <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-                Pesan kelas yoga favoritmu dengan mudah. Studio modern dengan instruktur bersertifikat untuk perjalanan spiritualmu.
-            </p>
-        </div>
-    </header>
-
-    <main class="max-w-5xl mx-auto px-6 pb-24">
+    <!-- Main Content -->
+    <main class="min-h-screen pb-28 pt-20">
         
-        <!-- View: Home (Classes) -->
-        <div x-show="view === 'home'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-            
-            <!-- Filter / Search Mockup (Visual Only) -->
-            <div class="flex flex-wrap gap-3 mb-8 justify-center">
-                <button class="px-5 py-2 rounded-full glass border-yoga-500 bg-yoga-500/20 text-white font-semibold text-sm transition-all">Semua Kelas</button>
-                <button class="px-5 py-2 rounded-full glass hover:bg-white/5 text-gray-400 text-sm transition-all">Pagi</button>
-                <button class="px-5 py-2 rounded-full glass hover:bg-white/5 text-gray-400 text-sm transition-all">Sore</button>
-            </div>
+        <!-- VIEW: HOME (Hero + Featured) -->
+        <div x-show="view === 'home'" class="page-enter">
+            <!-- Hero Section -->
+            <section class="px-4 mb-8">
+                <div class="relative rounded-[2.5rem] overflow-hidden aspect-[4/5] md:aspect-[21/9] shadow-2xl">
+                    <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1200" class="w-full h-full object-cover" alt="Yoga Hero">
+                    <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/40 to-transparent"></div>
+                    <div class="absolute inset-0 flex flex-col justify-end p-8 md:p-16">
+                        <span class="text-yoga-400 font-bold tracking-[0.2em] text-xs uppercase mb-3">Premium Wellness Studio</span>
+                        <h1 class="text-4xl md:text-6xl font-display font-bold text-white mb-4 leading-tight">
+                            Temukan Ketenangan <br> <span class="text-yoga-300">Sempurna Anda</span>
+                        </h1>
+                        <p class="text-gray-300 max-w-md mb-8 text-sm md:text-base leading-relaxed opacity-90">
+                            Masuk ke dalam perjalanan spiritual yang akan menyegarkan pikiran, tubuh, dan jiwa Anda.
+                        </p>
+                        <div class="flex gap-4">
+                            <button @click="view = 'classes'" class="yoga-gradient px-8 py-4 rounded-2xl font-bold text-white shadow-xl shadow-yoga-500/20 active:scale-95 transition-all">Mulai Booking</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-            <!-- Loading Skeleton -->
-            <div x-show="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Quick Info -->
+            <section class="px-6 grid grid-cols-2 gap-4 mb-8">
+                <div class="glass p-5 rounded-3xl">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Instruktur</p>
+                    <p class="text-xl font-bold">12 Ahli</p>
+                </div>
+                <div class="glass p-5 rounded-3xl">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Kelas</p>
+                    <p class="text-xl font-bold">24 Sesi</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- VIEW: CLASSES -->
+        <div x-show="view === 'classes'" class="px-4 page-enter">
+            <header class="mb-8 pt-4 px-2">
+                <h2 class="text-3xl font-display font-bold">Jadwal Kelas</h2>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Pilih sesi yang sesuai dengan kebutuhan Anda.</p>
+            </header>
+
+            <!-- Skeleton Loading -->
+            <div x-show="loading" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <template x-for="i in 3">
-                    <div class="glass rounded-3xl p-4 h-[400px]">
-                        <div class="skeleton w-full h-48 rounded-2xl mb-6"></div>
-                        <div class="skeleton w-2/3 h-6 rounded-lg mb-3"></div>
-                        <div class="skeleton w-1/2 h-4 rounded-lg mb-8"></div>
-                        <div class="skeleton w-full h-12 rounded-xl"></div>
+                    <div class="glass rounded-[2rem] p-4 h-[380px] relative overflow-hidden">
+                        <div class="shimmer absolute inset-0"></div>
+                        <div class="w-full h-40 bg-gray-800/20 rounded-2xl mb-4"></div>
+                        <div class="w-2/3 h-6 bg-gray-800/20 rounded-lg mb-2"></div>
+                        <div class="w-1/2 h-4 bg-gray-800/20 rounded-lg"></div>
                     </div>
                 </template>
             </div>
 
-            <!-- Grid Classes -->
-            <div x-show="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Class Cards Grid -->
+            <div x-show="!loading" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <template x-for="cls in classes" :key="cls.id">
-                    <div class="glass rounded-[2rem] p-5 group hover:border-yoga-500/50 transition-all duration-500 flex flex-col">
-                        <!-- Image Area -->
-                        <div class="relative h-48 rounded-2xl overflow-hidden mb-6">
-                            <img :src="`https://source.unsplash.com/featured/800x600?yoga,nature&sig=${cls.id}`" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Yoga Class">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div class="glass rounded-[2.5rem] p-4 group hover:border-yoga-500/30 transition-all duration-500 flex flex-col relative overflow-hidden">
+                        <!-- Difficulty Badge -->
+                        <div class="absolute top-6 right-6 z-10">
+                            <span class="bg-dark-900/60 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1.5 rounded-full border border-white/10" x-text="'All Levels'"></span>
+                        </div>
+
+                        <!-- Card Image -->
+                        <div class="relative h-44 rounded-[1.8rem] overflow-hidden mb-5">
+                            <img :src="`https://source.unsplash.com/featured/800x600?yoga,nature&sig=${cls.id}`" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Yoga">
+                            <div class="absolute inset-0 bg-gradient-to-t from-dark-900/80 via-transparent to-transparent"></div>
                             <div class="absolute bottom-4 left-4">
-                                <span class="bg-yoga-500 text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full" x-text="cls.instructor"></span>
+                                <span class="bg-yoga-500 text-white text-[10px] uppercase font-bold px-3 py-1 rounded-full shadow-lg" x-text="cls.instructor"></span>
                             </div>
                         </div>
 
-                        <!-- Content -->
-                        <h3 class="text-xl font-bold mb-2 font-display" x-text="cls.title"></h3>
-                        <div class="space-y-2 mb-6">
-                            <div class="flex items-center text-gray-400 text-sm gap-2">
-                                <span class="text-yoga-400">📅</span> <span x-text="cls.formatted_date"></span>
-                            </div>
-                            <div class="flex items-center text-gray-400 text-sm gap-2">
-                                <span class="text-yoga-400">🕒</span> <span x-text="cls.formatted_time"></span>
-                            </div>
+                        <!-- Card Body -->
+                        <div class="px-2 pb-2 flex-1 flex flex-col">
+                            <h3 class="text-xl font-bold mb-3 font-display leading-tight" x-text="cls.title"></h3>
                             
-                            <!-- Quota Logic -->
-                            <div class="mt-4">
-                                <div class="flex justify-between text-xs mb-1">
-                                    <span class="text-gray-500">Ketersediaan Slot</span>
-                                    <span :class="cls.booked >= cls.quota ? 'text-red-400' : 'text-yoga-400'" x-text="cls.booked >= cls.quota ? 'Full Booked' : `${cls.booked} / ${cls.quota} Slot`"></span>
+                            <div class="space-y-2.5 mb-6">
+                                <div class="flex items-center text-gray-500 dark:text-gray-400 text-xs gap-3">
+                                    <span class="w-6 h-6 flex items-center justify-center bg-yoga-500/10 rounded-lg text-yoga-500 text-sm">📅</span>
+                                    <span x-text="cls.formatted_date"></span>
                                 </div>
-                                <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                                    <div class="h-full yoga-gradient transition-all duration-1000" :style="`width: ${(cls.booked/cls.quota)*100}%`" :class="cls.booked >= cls.quota ? 'from-red-500 to-red-600' : ''"></div>
+                                <div class="flex items-center text-gray-500 dark:text-gray-400 text-xs gap-3">
+                                    <span class="w-6 h-6 flex items-center justify-center bg-yoga-500/10 rounded-lg text-yoga-500 text-sm">🕒</span>
+                                    <span x-text="cls.formatted_time"></span>
+                                </div>
+                                
+                                <!-- Progress Quota -->
+                                <div class="mt-4">
+                                    <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-2">
+                                        <span class="text-gray-500">Slot Tersedia</span>
+                                        <span :class="cls.booked >= cls.quota ? 'text-red-400' : 'text-yoga-400'" x-text="cls.booked >= cls.quota ? 'Fully Booked' : `${cls.quota - cls.booked} Tersisa`"></span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                                        <div class="h-full yoga-gradient transition-all duration-1000" :style="`width: ${(cls.booked/cls.quota)*100}%`" :class="cls.booked >= cls.quota ? 'from-red-500 to-red-600' : ''"></div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="mt-auto pt-4 flex items-center justify-between">
-                            <span class="text-lg font-bold text-white" x-text="formatPrice(cls.price)"></span>
-                            <button @click="openBooking(cls)" 
-                                :disabled="cls.booked >= cls.quota"
-                                class="px-6 py-2.5 rounded-xl font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed text-sm"
-                                :class="cls.booked >= cls.quota ? 'bg-gray-700' : 'yoga-gradient hover:shadow-lg hover:shadow-yoga-500/20 active:scale-95'">
-                                <span x-text="cls.booked >= cls.quota ? 'FULL' : 'BOOK'"></span>
-                            </button>
+                            <div class="mt-auto flex items-center justify-between gap-4">
+                                <p class="text-lg font-bold" x-text="formatPrice(cls.price)"></p>
+                                <button @click="openBooking(cls)" 
+                                    :disabled="cls.booked >= cls.quota"
+                                    class="flex-1 py-3.5 rounded-2xl font-bold transition-all disabled:opacity-30 disabled:grayscale text-sm"
+                                    :class="cls.booked >= cls.quota ? 'bg-gray-700' : 'yoga-gradient hover:shadow-lg hover:shadow-yoga-500/20 active:scale-95 text-white'">
+                                    <span x-text="cls.booked >= cls.quota ? 'PENUH' : 'PESAN'"></span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </template>
             </div>
         </div>
 
-        <!-- View: My Bookings -->
-        <div x-show="view === 'my-bookings'" class="max-w-2xl mx-auto" x-transition>
-            <div class="glass rounded-[2rem] p-8">
-                <h2 class="text-3xl font-display font-bold mb-6 text-center">Cek Booking Saya</h2>
-                
-                <div class="flex gap-3 mb-10">
-                    <input type="tel" x-model="searchPhone" placeholder="Masukkan Nomor WhatsApp..." class="flex-1 bg-gray-900 border border-gray-700 rounded-2xl px-6 py-4 focus:outline-none focus:border-yoga-500 transition-all">
-                    <button @click="checkMyBookings()" class="bg-yoga-500 px-8 rounded-2xl font-bold hover:bg-yoga-600 transition-all">Cek</button>
+        <!-- VIEW: MY BOOKING -->
+        <div x-show="view === 'my-bookings'" class="px-4 page-enter">
+            <div class="max-w-xl mx-auto">
+                <header class="mb-8 pt-4">
+                    <h2 class="text-3xl font-display font-bold">Booking Saya</h2>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Cek riwayat dan konfirmasi kedatangan Anda.</p>
+                </header>
+
+                <div class="glass p-6 rounded-[2rem] mb-8">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 ml-1">Nomor WhatsApp</label>
+                    <div class="flex gap-2">
+                        <input type="tel" x-model="searchPhone" placeholder="0812..." class="flex-1 bg-white/5 dark:bg-dark-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 focus:outline-none focus:border-yoga-500 transition-all text-sm">
+                        <button @click="checkMyBookings()" class="yoga-gradient px-6 rounded-2xl font-bold text-white shadow-lg active:scale-95 transition-all">Cek</button>
+                    </div>
                 </div>
 
+                <!-- Empty State -->
+                <div x-show="myBookings.length === 0 && !loading" class="text-center py-20">
+                    <div class="w-32 h-32 bg-yoga-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="text-5xl">🧘‍♂️</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Belum ada booking</h3>
+                    <p class="text-gray-500 text-sm max-w-xs mx-auto mb-8">Pilih kelas yoga yang Anda sukai dan mulai latihan hari ini.</p>
+                    <button @click="view = 'classes'" class="text-yoga-500 font-bold border-b-2 border-yoga-500 pb-1">Lihat Semua Kelas</button>
+                </div>
+
+                <!-- Bookings List -->
                 <div class="space-y-4">
                     <template x-for="res in myBookings" :key="res.id">
-                        <div class="bg-gray-800/50 border border-gray-700 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-4">
+                        <div class="glass p-6 rounded-[2rem] border-l-4 border-l-yoga-500 flex flex-col md:flex-row justify-between gap-6">
                             <div>
-                                <span class="text-[10px] font-bold text-yoga-400 uppercase tracking-widest" x-text="res.id"></span>
-                                <h4 class="text-lg font-bold" x-text="res.class_title"></h4>
-                                <p class="text-sm text-gray-400" x-text="`${res.class_date} • ${res.class_time}`"></p>
+                                <span class="text-[10px] font-bold text-yoga-500 uppercase tracking-widest block mb-1" x-text="res.id"></span>
+                                <h4 class="text-lg font-bold leading-tight mb-2" x-text="res.class_title"></h4>
+                                <div class="flex flex-col gap-1">
+                                    <p class="text-xs text-gray-500" x-text="res.class_date"></p>
+                                    <p class="text-xs text-gray-500" x-text="res.class_time"></p>
+                                </div>
                             </div>
-                            <div class="flex items-center">
-                                <span class="bg-green-500/20 text-green-400 text-xs px-3 py-1 rounded-full border border-green-500/30" x-text="res.status"></span>
+                            <div class="flex flex-col items-start md:items-end justify-between gap-4">
+                                <span class="bg-green-500/10 text-green-500 text-[10px] font-bold px-3 py-1 rounded-full border border-green-500/20" x-text="res.status"></span>
+                                <button class="text-yoga-500 text-xs font-bold underline" @click="showQR(res.id)">Tampilkan QR</button>
                             </div>
                         </div>
                     </template>
@@ -182,228 +234,245 @@
 
     </main>
 
-    <!-- Booking Modal -->
-    <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md" x-cloak x-transition>
-        <div class="glass w-full max-w-md rounded-[2.5rem] p-10 relative overflow-hidden" @click.away="modalOpen = false">
-            <div class="absolute top-0 right-0 w-32 h-32 yoga-gradient opacity-10 blur-3xl rounded-full"></div>
-            
-            <h2 class="text-3xl font-display font-bold mb-2">Pesan Kelas</h2>
-            <p class="text-gray-400 text-sm mb-8">Anda akan memesan kelas <span class="text-yoga-400 font-bold" x-text="selectedClass?.title"></span></p>
+    <!-- Bottom Navigation (App Like) -->
+    <div class="fixed bottom-0 inset-x-0 z-50 px-4 pb-6 pointer-events-none">
+        <div class="max-w-md mx-auto h-18 glass rounded-[2rem] flex items-center justify-around px-4 pointer-events-auto shadow-2xl">
+            <button @click="view = 'home'" class="flex flex-col items-center gap-1 transition-all" :class="view === 'home' ? 'text-yoga-500' : 'text-gray-400'">
+                <span class="text-2xl">🏠</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">Home</span>
+            </button>
+            <button @click="view = 'classes'" class="flex flex-col items-center gap-1 transition-all" :class="view === 'classes' ? 'text-yoga-500' : 'text-gray-400'">
+                <span class="text-2xl">🧘</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">Classes</span>
+            </button>
+            <button @click="view = 'my-bookings'" class="flex flex-col items-center gap-1 transition-all" :class="view === 'my-bookings' ? 'text-yoga-500' : 'text-gray-400'">
+                <span class="text-2xl">🎟️</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">Booking</span>
+            </button>
+            <button @click="UI.showAlert('info', 'Segera Hadir', 'Fitur profil sedang dalam pengembangan.')" class="flex flex-col items-center gap-1 text-gray-400 opacity-50">
+                <span class="text-2xl">👤</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">Profile</span>
+            </button>
+        </div>
+    </div>
 
-            <form @submit.prevent="submitBooking" class="space-y-5">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Nama Lengkap</label>
-                    <input type="text" x-model="formData.name" class="w-full bg-gray-900 border border-gray-700 rounded-2xl px-6 py-4 focus:outline-none focus:border-yoga-500 transition-all">
+    <!-- Booking Modal (Premium Slide Up) -->
+    <div x-show="modalOpen" class="fixed inset-0 z-[60] flex items-end justify-center bg-dark-900/80 backdrop-blur-sm" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-full" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-full">
+        <div class="bg-white dark:bg-dark-800 w-full max-w-xl rounded-t-[3rem] p-8 pb-12 shadow-2xl relative" @click.away="modalOpen = false">
+            <div class="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-8"></div>
+            
+            <header class="mb-8">
+                <h2 class="text-3xl font-display font-bold">Konfirmasi Booking</h2>
+                <p class="text-gray-500 text-sm mt-1">Kelas: <span class="text-yoga-500 font-bold" x-text="selectedClass?.title"></span></p>
+            </header>
+
+            <form @submit.prevent="submitBooking" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Nama Lengkap</label>
+                    <input type="text" x-model="formData.name" class="w-full bg-gray-100 dark:bg-dark-900 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-yoga-500 transition-all outline-none">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Nomor WhatsApp</label>
-                    <input type="tel" x-model="formData.phone" class="w-full bg-gray-900 border border-gray-700 rounded-2xl px-6 py-4 focus:outline-none focus:border-yoga-500 transition-all" placeholder="0812...">
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">WhatsApp</label>
+                    <input type="tel" x-model="formData.phone" class="w-full bg-gray-100 dark:bg-dark-900 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-yoga-500 transition-all outline-none" placeholder="0812...">
                 </div>
                 
-                <div class="pt-6 flex flex-col gap-3">
-                    <button type="submit" :disabled="bookingLoading" class="w-full yoga-gradient py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50">
+                <div class="pt-4 flex flex-col gap-3">
+                    <button type="submit" :disabled="bookingLoading" class="w-full yoga-gradient py-5 rounded-[1.5rem] font-bold text-white shadow-xl shadow-yoga-500/20 active:scale-95 transition-all flex items-center justify-center gap-3">
                         <span x-show="bookingLoading" class="animate-spin border-2 border-white border-t-transparent rounded-full h-5 w-5"></span>
-                        <span x-text="bookingLoading ? 'Memproses...' : 'Konfirmasi Pesanan'"></span>
+                        <span x-text="bookingLoading ? 'Memproses...' : 'Selesaikan Pembayaran'"></span>
                     </button>
-                    <button type="button" @click="modalOpen = false" class="w-full bg-transparent hover:bg-white/5 py-3 rounded-xl text-gray-500 text-sm font-semibold transition-all">Batal</button>
+                    <button type="button" @click="modalOpen = false" class="w-full py-4 rounded-xl text-gray-500 text-sm font-semibold hover:bg-gray-100 dark:hover:bg-dark-700 transition-all">Mungkin Nanti</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Script Application -->
     <script>
-        /**
-         * 1. API MODULE - Handles communication with Google Apps Script
-         */
+        // 1. API CONFIG
         const API = {
-            // URL Web App Google Apps Script
             URL: "https://script.google.com/macros/s/AKfycbz9icmh01tEjw4n5Jw9fc4qZGPmOTgOgfmQ-aIbICnR0W5aK1F7kmLshF4cPJ-ZCIpXzA/exec",
-
-            async fetchClasses() {
-                try {
-                    const response = await fetch(`${this.URL}?action=classes`);
-                    return await response.json();
-                } catch (error) { throw error; }
+            async fetch(action, params = '') {
+                const response = await fetch(`${this.URL}?action=${action}${params}`);
+                return await response.json();
             },
-
-            async createBooking(data) {
-                try {
-                    const response = await fetch(this.URL, {
-                        method: "POST",
-                        body: JSON.stringify(data)
-                    });
-                    return await response.json();
-                } catch (error) { throw error; }
-            },
-
-            async fetchMyBookings(phone) {
-                try {
-                    const response = await fetch(`${this.URL}?action=my_bookings&phone=${phone}`);
-                    return await response.json();
-                } catch (error) { throw error; }
+            async post(data) {
+                const response = await fetch(this.URL, { method: "POST", body: JSON.stringify(data) });
+                return await response.json();
             }
         };
 
-        /**
-         * 2. UI MODULE - Handles standardized feedback
-         */
+        // 2. UI HELPERS
         const UI = {
             showAlert(icon, title, text, html = '') {
                 return Swal.fire({
-                    icon: icon,
-                    title: title,
-                    text: text,
-                    html: html,
-                    background: '#111827',
-                    color: '#fff',
-                    confirmButtonColor: icon === 'error' ? '#ef4444' : '#8b5cf6',
-                    customClass: {
-                        popup: 'rounded-[2rem] border border-gray-800 shadow-2xl',
-                        confirmButton: 'rounded-xl px-8 py-3 font-bold'
-                    }
+                    icon, title, text, html,
+                    background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#fff',
+                    color: document.documentElement.classList.contains('dark') ? '#fff' : '#0f172a',
+                    confirmButtonColor: '#8b5cf6',
+                    customClass: { popup: 'rounded-[2.5rem] border-none shadow-2xl', confirmButton: 'rounded-2xl px-10 py-4 font-bold' }
                 });
-            },
-            formatCurrency(amount) {
-                return new Intl.NumberFormat('id-ID', {
-                    style: 'currency',
-                    currency: 'IDR',
-                    minimumFractionDigits: 0
-                }).format(amount);
             }
         };
 
-        /**
-         * 3. BOOKING LOGIC - Handles persistence
-         */
-        const Booking = {
-            saveUserData(name, phone) {
-                localStorage.setItem('yoga_user_name', name);
-                localStorage.setItem('yoga_user_phone', phone);
-            },
-            getUserData() {
-                return {
-                    name: localStorage.getItem('yoga_user_name') || '',
-                    phone: localStorage.getItem('yoga_user_phone') || ''
-                };
-            }
-        };
-
-        /**
-         * 4. ALPINE APPLICATION - Main controller
-         */
+        // 3. ALPINE CORE
         function yogaApp() {
             return {
-                loading: true,
+                view: 'home',
+                loading: false,
+                isDark: false,
                 classes: [],
+                myBookings: [],
                 modalOpen: false,
                 selectedClass: null,
                 bookingLoading: false,
-                myBookings: [],
-                view: 'home',
                 formData: { name: '', phone: '' },
                 searchPhone: '',
 
                 async init() {
-                    const userData = Booking.getUserData();
-                    this.formData.name = userData.name;
-                    this.formData.phone = userData.phone;
-                    this.searchPhone = userData.phone;
+                    this.initTheme();
+                    this.loadSavedData();
                     await this.loadClasses();
+                    this.registerSW();
+                    
+                    // Listener untuk navigasi dari tombol SweetAlert
+                    window.addEventListener('nav', (e) => {
+                        this.view = e.detail;
+                        Swal.close();
+                    });
+                },
+
+                initTheme() {
+                    this.isDark = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    if (this.isDark) document.documentElement.classList.add('dark');
+                    else document.documentElement.classList.remove('dark');
+                },
+
+                toggleTheme() {
+                    this.isDark = !this.isDark;
+                    if (this.isDark) {
+                        document.documentElement.classList.add('dark');
+                        localStorage.theme = 'dark';
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.theme = 'light';
+                    }
+                },
+
+                loadSavedData() {
+                    this.formData.name = localStorage.getItem('yoga_name') || '';
+                    this.formData.phone = localStorage.getItem('yoga_phone') || '';
+                    this.searchPhone = this.formData.phone;
                 },
 
                 async loadClasses() {
                     this.loading = true;
                     try {
-                        const result = await API.fetchClasses();
-                        if (result.success) this.classes = result.data;
-                    } catch (e) {
-                        console.error(e);
-                        UI.showAlert('error', 'Gagal Memuat', 'Terjadi kesalahan saat mengambil jadwal kelas.');
-                    } finally {
-                        this.loading = false;
-                    }
+                        const res = await API.fetch('classes');
+                        if (res.success) this.classes = res.data;
+                    } finally { this.loading = false; }
                 },
 
                 openBooking(cls) {
-                    if (cls.booked >= cls.quota) {
-                        UI.showAlert('info', 'Kelas Penuh', 'Mohon pilih jadwal kelas lainnya.');
-                        return;
-                    }
                     this.selectedClass = cls;
                     this.modalOpen = true;
                 },
 
                 async submitBooking() {
-                    if (!this.formData.name.trim() || !this.formData.phone.trim()) {
-                        UI.showAlert('warning', 'Data Kosong', 'Harap isi nama dan nomor WhatsApp Anda.');
-                        return;
-                    }
-
+                    if (!this.formData.name || !this.formData.phone) return UI.showAlert('warning', 'Data Kurang', 'Lengkapi nama dan nomor WhatsApp Anda.');
                     this.bookingLoading = true;
+                    
                     try {
-                        const result = await API.createBooking({
-                            class_id: this.selectedClass.id,
-                            name: this.formData.name,
-                            phone: this.formData.phone
-                        });
-
-                        if (result.success) {
-                            Booking.saveUserData(this.formData.name, this.formData.phone);
+                        const res = await API.post({ ...this.formData, class_id: this.selectedClass.id });
+                        if (res.success) {
+                            localStorage.setItem('yoga_name', this.formData.name);
+                            localStorage.setItem('yoga_phone', this.formData.phone);
                             this.modalOpen = false;
-                            
-                            // Success Alert with QR
-                            await UI.showAlert('success', 'Booking Berhasil!', '', `
-                                <div class="flex flex-col items-center gap-4 py-4">
-                                    <p class="text-sm text-gray-400">ID Booking: <b class="text-white">${result.booking_id}</b></p>
-                                    <div id="qrcode" class="bg-white p-2 rounded-xl inline-block"></div>
-                                    <p class="text-xs text-gray-500 mt-2">Simpan QR ini untuk verifikasi</p>
-                                </div>
-                            `);
 
-                            // Generate QR code
-                            new QRCode(document.getElementById("qrcode"), {
-                                text: result.booking_id,
-                                width: 128,
-                                height: 128
+                            // Data untuk WhatsApp
+                            const bookingData = {
+                                id: res.booking_id,
+                                name: this.formData.name,
+                                class: this.selectedClass.title,
+                                date: this.selectedClass.formatted_date,
+                                time: this.selectedClass.formatted_time
+                            };
+
+                            const waLink = this.generateWALink(bookingData);
+                            
+                            // Success Alert with Action Buttons
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Booking Berhasil!',
+                                html: `
+                                    <div class="flex flex-col items-center gap-4 py-4">
+                                        <p class="text-sm text-gray-500">ID: <b class="text-yoga-500">${res.booking_id}</b></p>
+                                        <div id="qrcode" class="bg-white p-3 rounded-2xl shadow-inner"></div>
+                                        <p class="text-[10px] text-gray-400 uppercase tracking-widest mt-2">Mengarahkan ke WhatsApp...</p>
+                                        
+                                        <div class="flex flex-col w-full gap-2 mt-4">
+                                            <a href="${waLink}" target="_blank" class="bg-green-500 text-white py-3 rounded-xl font-bold text-sm text-center shadow-lg hover:bg-green-600 transition-all">Hubungi Admin via WhatsApp</a>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <button onclick="window.dispatchEvent(new CustomEvent('nav', {detail: 'home'}))" class="bg-gray-100 dark:bg-dark-700 py-3 rounded-xl text-xs font-bold transition-all">Home</button>
+                                                <button onclick="window.dispatchEvent(new CustomEvent('nav', {detail: 'my-bookings'}))" class="bg-gray-100 dark:bg-dark-700 py-3 rounded-xl text-xs font-bold transition-all">My Booking</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `,
+                                background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#fff',
+                                color: document.documentElement.classList.contains('dark') ? '#fff' : '#0f172a',
+                                showConfirmButton: false,
+                                timer: 6000,
+                                timerProgressBar: true,
+                                didOpen: () => {
+                                    new QRCode(document.getElementById("qrcode"), { text: res.booking_id, width: 120, height: 120, colorDark: "#0f172a" });
+                                    
+                                    // Redirect Otomatis setelah 2 detik
+                                    setTimeout(() => {
+                                        window.open(waLink, '_blank');
+                                    }, 2000);
+                                }
                             });
 
                             await this.loadClasses();
                         } else {
-                            UI.showAlert('error', 'Booking Gagal', result.message);
+                            UI.showAlert('error', 'Gagal', res.message);
                         }
-                    } catch (e) {
-                        UI.showAlert('error', 'Koneksi Gagal', 'Gagal memproses data ke server.');
-                    } finally {
-                        this.bookingLoading = false;
-                    }
+                    } catch (e) { UI.showAlert('error', 'Koneksi Error', 'Terjadi kesalahan sistem.'); }
+                    finally { this.bookingLoading = false; }
+                },
+
+                generateWALink(b) {
+                    const waAdmin = "6281234567890"; // GANTI DENGAN NOMOR WA ANDA
+                    const msg = `Halo Admin Natha Yoga,\n\nSaya baru saja melakukan reservasi kelas yoga.\n\n*Detail Booking:*\n- Booking ID: ${b.id}\n- Nama: ${b.name}\n- Kelas: ${b.class}\n- Tanggal: ${b.date}\n- Jam: ${b.time}\n\nMohon konfirmasi reservasi saya 🙏`;
+                    return `https://wa.me/${waAdmin}?text=${encodeURIComponent(msg)}`;
                 },
 
                 async checkMyBookings() {
-                    const phone = this.searchPhone.trim();
-                    if (!phone) {
-                        this.showAlert('warning', 'Input Kosong', 'Masukkan nomor WhatsApp Anda.');
-                        return;
-                    }
-
+                    if (!this.searchPhone) return UI.showAlert('warning', 'Input Kosong', 'Masukkan nomor WA Anda.');
                     this.loading = true;
                     try {
-                        const result = await API.fetchMyBookings(phone);
-                        if (result.success) {
-                            this.myBookings = result.data;
-                            this.view = 'my-bookings';
-                            if (this.myBookings.length === 0) {
-                                this.showAlert('info', 'Tidak Ditemukan', 'Belum ada riwayat booking untuk nomor ini.');
-                            }
-                        }
-                    } catch (e) {
-                        this.showAlert('error', 'Error', 'Gagal mengambil data booking.');
-                    } finally {
-                        this.loading = false;
-                    }
+                        const res = await API.fetch('my_bookings', `&phone=${this.searchPhone.replace(/[^0-9]/g, "")}`);
+                        if (res.success) this.myBookings = res.data;
+                    } finally { this.loading = false; }
                 },
 
-                formatPrice(p) { return UI.formatCurrency(p); }
+                showQR(id) {
+                    UI.showAlert('info', 'QR Booking', '', `<div class="flex flex-col items-center py-4"><div id="qrcode-view" class="bg-white p-3 rounded-2xl"></div><p class="mt-4 font-bold text-yoga-500">${id}</p></div>`);
+                    new QRCode(document.getElementById("qrcode-view"), { text: id, width: 150, height: 150 });
+                },
+
+                formatPrice(p) {
+                    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(p);
+                },
+
+                registerSW() {
+                    if ('serviceWorker' in navigator) {
+                        window.addEventListener('load', () => {
+                            navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW Registered')).catch(err => console.log('SW Fail'));
+                        });
+                    }
+                }
             }
         }
     </script>
