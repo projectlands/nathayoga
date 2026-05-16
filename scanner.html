@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Natha Yoga | Admin QR Scanner</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        yoga: { 500: '#8b5cf6', 600: '#7c3aed' },
+                        dark: { 900: '#0f172a', 800: '#1e293b' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        body { background-color: #0f172a; color: white; overflow: hidden; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        
+        /* Scanner UI */
+        #reader { border: none !important; width: 100% !important; }
+        #reader video { border-radius: 2rem !important; object-fit: cover !important; }
+        #reader__dashboard { background: transparent !important; color: white !important; }
+        
+        .scan-overlay {
+            position: absolute;
+            inset: 0;
+            border: 2px solid rgba(139, 92, 246, 0.5);
+            border-radius: 2rem;
+            pointer-events: none;
+            box-shadow: 0 0 0 100vmax rgba(15, 23, 42, 0.8);
+        }
+        
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #8b5cf6;
+            box-shadow: 0 0 15px #8b5cf6;
+            animation: scan 2s linear infinite;
+        }
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+    </style>
+</head>
+<body class="font-sans" x-data="scannerApp()">
+
+    <!-- Header -->
+    <nav class="fixed top-0 inset-x-0 z-50 p-6 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-gradient-to-br from-yoga-500 to-pink-500 rounded-xl flex items-center justify-center font-bold shadow-lg">N</div>
+            <span class="font-display font-bold text-lg">Admin Scanner</span>
+        </div>
+        <a href="index.html" class="text-xs font-bold uppercase tracking-widest text-gray-400">Keluar</a>
+    </nav>
+
+    <!-- Main Scanner -->
+    <main class="h-screen w-full flex flex-col items-center justify-center p-6 relative">
+        
+        <!-- Camera Container -->
+        <div class="relative w-full max-w-sm aspect-square rounded-[2.5rem] overflow-hidden bg-black shadow-2xl border-4 border-gray-800">
+            <div id="reader"></div>
+            
+            <!-- Visual Scan Decoration -->
+            <div x-show="scanning" class="scan-overlay">
+                <div class="scan-line"></div>
+            </div>
+
+            <!-- Permission / Initial Message -->
+            <div x-show="!scanning" class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-dark-800">
+                <span class="text-5xl mb-6">📷</span>
+                <h2 class="text-xl font-bold mb-2">Siap Melakukan Scan?</h2>
+                <p class="text-gray-400 text-sm mb-8 leading-relaxed">Izinkan akses kamera untuk memindai kode QR peserta yoga.</p>
+                <button @click="startScanner()" class="bg-yoga-500 px-8 py-4 rounded-2xl font-bold shadow-xl active:scale-95 transition-all">Mulai Kamera</button>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div x-show="scanning" class="mt-10 flex gap-4">
+            <button @click="stopScanner()" class="bg-red-500/20 text-red-500 border border-red-500/30 px-6 py-3 rounded-2xl font-bold text-sm">Berhenti</button>
+            <button @click="switchCamera()" class="glass px-6 py-3 rounded-2xl font-bold text-sm">Ganti Kamera</button>
+        </div>
+
+    </main>
+
+    <!-- Audio for Scan -->
+    <audio id="scan-sound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" preload="auto"></audio>
+
+    <script>
+        function scannerApp() {
+            return {
+                scanning: false,
+                html5QrCode: null,
+                isProcessing: false,
+                currentCamera: "environment", // 'user' or 'environment'
+                apiUrl: "https://script.google.com/macros/s/AKfycbz9icmh01tEjw4n5Jw9fc4qZGPmOTgOgfmQ-aIbICnR0W5aK1F7kmLshF4cPJ-ZCIpXzA/exec",
+
+                async startScanner() {
+                    this.html5QrCode = new Html5Qrcode("reader");
+                    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+                    try {
+                        await this.html5QrCode.start(
+                            { facingMode: this.currentCamera },
+                            config,
+                            (decodedText) => this.handleScanSuccess(decodedText)
+                        );
+                        this.scanning = true;
+                    } catch (err) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Kamera Gagal',
+                            text: 'Gagal mengakses kamera. Pastikan izin kamera sudah diberikan.',
+                            background: '#1e293b', color: '#fff'
+                        });
+                    }
+                },
+
+                async stopScanner() {
+                    if (this.html5QrCode) {
+                        await this.html5QrCode.stop();
+                        this.scanning = false;
+                    }
+                },
+
+                async switchCamera() {
+                    this.currentCamera = this.currentCamera === "environment" ? "user" : "environment";
+                    await this.stopScanner();
+                    await this.startScanner();
+                },
+
+                async handleScanSuccess(decodedText) {
+                    if (this.isProcessing) return;
+                    this.isProcessing = true;
+
+                    // Haptic & Sound Feedback
+                    this.playFeedback();
+
+                    // Loading UI
+                    Swal.fire({
+                        title: 'Validasi Booking...',
+                        html: `<p class="text-sm text-gray-400">ID: <b>${decodedText}</b></p>`,
+                        allowOutsideClick: false,
+                        didOpen: () => Swal.showLoading(),
+                        background: '#1e293b', color: '#fff'
+                    });
+
+                    try {
+                        const response = await fetch(`${this.apiUrl}?action=checkin&booking_id=${decodedText}`);
+                        const result = await response.json();
+
+                        if (result.success) {
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Check-in Berhasil!',
+                                html: `
+                                    <div class="py-4 text-center">
+                                        <p class="text-2xl font-bold text-yoga-500 mb-2">${result.data.name}</p>
+                                        <p class="text-sm text-gray-300">${result.data.class_title}</p>
+                                        <p class="text-xs text-gray-500">${result.data.class_time}</p>
+                                    </div>
+                                `,
+                                background: '#1e293b', color: '#fff',
+                                confirmButtonText: 'Lanjut Scan',
+                                confirmButtonColor: '#8b5cf6',
+                                customClass: { popup: 'rounded-[2.5rem]', confirmButton: 'rounded-xl px-10' }
+                            });
+                        } else {
+                            await Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: result.message,
+                                background: '#1e293b', color: '#fff',
+                                confirmButtonColor: '#ef4444',
+                                customClass: { popup: 'rounded-[2.5rem]' }
+                            });
+                        }
+                    } catch (err) {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan koneksi ke server.', background: '#1e293b', color: '#fff' });
+                    } finally {
+                        this.isProcessing = false;
+                    }
+                },
+
+                playFeedback() {
+                    // Sound
+                    document.getElementById('scan-sound').play().catch(() => {});
+                    // Vibration
+                    if ('vibrate' in navigator) navigator.vibrate(200);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

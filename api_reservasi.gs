@@ -22,10 +22,71 @@ function doGet(e) {
     if (action === "my_bookings") {
       return getMyBookings(e.parameter.phone);
     }
+    if (action === "checkin") {
+      return handleCheckin(e.parameter.booking_id);
+    }
     return responseJSON({ success: false, message: "Action not found" });
   } catch (err) {
     return responseJSON({ success: false, message: err.toString() });
   }
+}
+
+/**
+ * Handle Admin Check-in
+ */
+function handleCheckin(bookingId) {
+  if (!bookingId) return responseJSON({ success: false, message: "Booking ID required" });
+  
+  const data = SHEET_RESERVATIONS.getDataRange().getValues();
+  const headers = data[0];
+  const rows = data.slice(1);
+  
+  const rowIndex = rows.findIndex(row => row[0] === bookingId);
+  if (rowIndex === -1) return responseJSON({ success: false, message: "Booking ID tidak ditemukan" });
+  
+  const reservation = rows[rowIndex];
+  const statusIndex = headers.indexOf("status");
+  const checkinIndex = headers.indexOf("checkin_at");
+  
+  // Validation
+  if (reservation[statusIndex] === "checked_in") {
+    return responseJSON({ 
+      success: false, 
+      message: "Peserta sudah check-in sebelumnya",
+      data: { name: reservation[2] } 
+    });
+  }
+  
+  if (reservation[statusIndex] === "cancelled") {
+    return responseJSON({ success: false, message: "Booking ini telah dibatalkan" });
+  }
+
+  // Update Status & Time
+  // Row index in sheet is rowIndex + 2 (1-based + header)
+  SHEET_RESERVATIONS.getRange(rowIndex + 2, statusIndex + 1).setValue("checked_in");
+  
+  // Add checkin_at column if not exist or just update it
+  // We assume headers are: id, class_id, name, phone, status, created_at, checkin_at
+  if (checkinIndex === -1) {
+    SHEET_RESERVATIONS.getRange(1, headers.length + 1).setValue("checkin_at");
+    SHEET_RESERVATIONS.getRange(rowIndex + 2, headers.length + 1).setValue(new Date());
+  } else {
+    SHEET_RESERVATIONS.getRange(rowIndex + 2, checkinIndex + 1).setValue(new Date());
+  }
+
+  // Get Class Info for Response
+  const classes = getSheetData(SHEET_CLASSES);
+  const cls = classes.find(c => c.id == reservation[1]);
+
+  return responseJSON({
+    success: true,
+    message: "Check-in Berhasil!",
+    data: {
+      name: reservation[2],
+      class_title: cls ? cls.title : "Unknown",
+      class_time: cls ? formatTime(cls.time) : ""
+    }
+  });
 }
 
 /**
