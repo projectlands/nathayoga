@@ -25,10 +25,123 @@ function doGet(e) {
     if (action === "checkin") {
       return handleCheckin(e.parameter.booking_id);
     }
+    if (action === "generate_token") {
+      return handleGenerateToken(e.parameter.class_id);
+    }
+    if (action === "checkin_self") {
+      return handleCheckinSelf(e.parameter.token, e.parameter.phone, e.parameter.booking_id);
+    }
+    if (action === "attendance_list") {
+      return handleAttendanceList(e.parameter.class_id);
+    }
     return responseJSON({ success: false, message: "Action not found" });
   } catch (err) {
     return responseJSON({ success: false, message: err.toString() });
   }
+}
+
+/**
+ * Generate Dynamic Token for Class Session
+ */
+function handleGenerateToken(classId) {
+  if (!classId) return responseJSON({ success: false, message: "Class ID required" });
+  
+  const token = "SES-" + Utilities.getUuid().substring(0, 8).toUpperCase();
+  const expiry = new Date(new Date().getTime() + 60 * 60 * 1000); // 1 hour expiry
+  
+  // Store token in a dedicated sheet or PropertyService
+  // For simplicity & persistence, we'll use a new sheet 'sessions'
+  let sheetSessions = SS.getSheetByName("sessions");
+  if (!sheetSessions) {
+    sheetSessions = SS.insertSheet("sessions");
+    sheetSessions.appendRow(["token", "class_id", "created_at", "expired_at"]);
+  }
+  
+  sheetSessions.appendRow([token, classId, new Date(), expiry]);
+  
+  return responseJSON({
+    success: true,
+    data: { token, expiry: expiry.toISOString(), class_id: classId }
+  });
+}
+
+/**
+ * Handle Self Check-in by Participant
+ */
+function handleCheckinSelf(token, phone, bookingId) {
+  if (!token || (!phone && !bookingId)) return responseJSON({ success: false, message: "Missing required data" });
+  
+  // 1. Validate Token
+  const sheetSessions = SS.getSheetByName("sessions");
+  if (!sheetSessions) return responseJSON({ success: false, message: "System Error: No sessions found" });
+  
+  const sessions = sheetSessions.getDataRange().getValues().slice(1);
+  const session = sessions.find(s => s[0] === token);
+  
+  if (!session) return responseJSON({ success: false, message: "Token tidak valid" });
+  if (new Date() > new Date(session[3])) return responseJSON({ success: false, message: "Token sudah kadaluwarsa" });
+  
+  const classId = session[1];
+  
+  // 2. Find and Validate Booking
+  const data = SHEET_RESERVATIONS.getDataRange().getValues();
+  const headers = data[0];
+  const rows = data.slice(1);
+  
+  // Search by Phone or Booking ID
+  const rowIndex = rows.findIndex(row => {
+    const matchUser = (phone && normalizePhone(row[3]) === normalizePhone(phone)) || (bookingId && row[0] === bookingId);
+    return matchUser && row[1] == classId;
+  });
+  
+  if (rowIndex === -1) return responseJSON({ success: false, message: "Booking tidak ditemukan untuk kelas ini" });
+  
+  const reservation = rows[rowIndex];
+  const statusIndex = headers.indexOf("status");
+  
+  if (reservation[statusIndex] === "checked_in") {
+    return responseJSON({ success: true, message: "Anda sudah check-in sebelumnya", already: true });
+  }
+
+  // 3. Update Check-in
+  SHEET_RESERVATIONS.getRange(rowIndex + 2, statusIndex + 1).setValue("checked_in");
+  const checkinIndex = headers.indexOf("checkin_at");
+  if (checkinIndex !== -1) {
+    SHEET_RESERVATIONS.getRange(rowIndex + 2, checkinIndex + 1).setValue(new Date());
+  }
+
+  return responseJSON({
+    success: true,
+    message: "Check-in Berhasil!",
+    data: { name: reservation[2] }
+  });
+}
+
+/**
+ * Get Realtime Attendance List for Admin
+ */
+function handleAttendanceList(classId) {
+  if (!classId) return responseJSON({ success: false, message: "Class ID required" });
+  
+  const reservations = SHEET_RESERVATIONS.getDataRange().getValues().slice(1);
+  const headers = SHEET_RESERVATIONS.getDataRange().getValues()[0];
+  const statusIndex = headers.indexOf("status");
+  
+  const attendees = reservations
+    .filter(r => r[1] == classId && r[statusIndex] === "checked_in")
+    .map(r => ({
+      id: r[0],
+      name: r[2],
+      checkin_at: r[headers.indexOf("checkin_at")]
+    }));
+    
+  return responseJSON({
+    success: true,
+    data: {
+      total_present: attendees.length,
+      list: attendees
+    }
+  });
 }
 
 /**
