@@ -380,23 +380,24 @@
                 },
 
                 async checkMyBookings() {
-                    if (!this.searchPhone.trim()) {
-                        UI.showAlert('warning', 'Input Kosong', 'Masukkan nomor WhatsApp Anda.');
+                    const phone = this.searchPhone.trim();
+                    if (!phone) {
+                        this.showAlert('warning', 'Input Kosong', 'Masukkan nomor WhatsApp Anda.');
                         return;
                     }
 
                     this.loading = true;
                     try {
-                        const result = await API.fetchMyBookings(this.searchPhone);
+                        const result = await API.fetchMyBookings(phone);
                         if (result.success) {
                             this.myBookings = result.data;
                             this.view = 'my-bookings';
                             if (this.myBookings.length === 0) {
-                                UI.showAlert('info', 'Tidak Ditemukan', 'Belum ada riwayat booking untuk nomor ini.');
+                                this.showAlert('info', 'Tidak Ditemukan', 'Belum ada riwayat booking untuk nomor ini.');
                             }
                         }
                     } catch (e) {
-                        UI.showAlert('error', 'Error', 'Gagal mengambil data booking.');
+                        this.showAlert('error', 'Error', 'Gagal mengambil data booking.');
                     } finally {
                         this.loading = false;
                     }

@@ -64,9 +64,13 @@ function getMyBookings(phone) {
   const reservations = getSheetData(SHEET_RESERVATIONS);
   const classes = getSheetData(SHEET_CLASSES);
   
+  // Normalisasi nomor HP pencari (hanya angka)
+  const searchPhoneClean = phone.toString().replace(/[^0-9]/g, "");
+  
   const userBookings = reservations.filter(r => {
-    const cleanPhone = r.phone.toString().replace("'", "");
-    return cleanPhone === phone.toString();
+    // Normalisasi nomor HP dari sheet (hanya angka)
+    const storedPhoneClean = r.phone.toString().replace(/[^0-9]/g, "");
+    return storedPhoneClean === searchPhoneClean;
   });
   
   const detailedBookings = userBookings.map(r => {
