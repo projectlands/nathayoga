@@ -161,9 +161,11 @@
                 async generateToken() {
                     if (!this.selectedClassId) return;
                     this.loading = true;
+                    this.token = ''; // Reset token
                     
                     try {
                         const res = await fetch(`${this.apiUrl}?action=generate_token&class_id=${this.selectedClassId}`).then(r => r.json());
+                        
                         if (res.success) {
                             this.token = res.data.token;
                             
@@ -172,13 +174,16 @@
                             this.checkinUrl = `${baseUrl}?token=${this.token}`;
                             
                             // Clear and Generate QR
-                            document.getElementById("qrcode-container").innerHTML = "";
-                            new QRCode(document.getElementById("qrcode-container"), {
-                                text: this.checkinUrl,
-                                width: 250,
-                                height: 250,
-                                colorDark: "#0f172a",
-                                correctLevel: QRCode.CorrectLevel.H
+                            this.$nextTick(() => {
+                                const container = document.getElementById("qrcode-container");
+                                container.innerHTML = "";
+                                new QRCode(container, {
+                                    text: this.checkinUrl,
+                                    width: 250,
+                                    height: 250,
+                                    colorDark: "#0f172a",
+                                    correctLevel: QRCode.CorrectLevel.H
+                                });
                             });
 
                             const cls = this.classes.find(c => c.id == this.selectedClassId);
@@ -186,7 +191,21 @@
                             this.selectedClassQuota = cls.quota;
 
                             this.startAttendanceSync();
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal Generate QR',
+                                text: res.message || 'Terjadi kesalahan pada server.',
+                                background: '#1e293b', color: '#fff'
+                            });
                         }
+                    } catch (err) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Network Error',
+                            text: 'Gagal menghubungi server Apps Script. Pastikan Anda sudah "Deploy" sebagai "Web App" dan izin akses diatur ke "Anyone".',
+                            background: '#1e293b', color: '#fff'
+                        });
                     } finally { this.loading = false; }
                 },
 
