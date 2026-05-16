@@ -350,7 +350,11 @@
                         const res = await fetch(API.URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain' },
-                            body: JSON.stringify({ action: 'create_schedule', ...this.formData })
+                            body: JSON.stringify({ 
+                                action: this.editingId ? 'update_schedule' : 'create_schedule', 
+                                id: this.editingId,
+                                ...this.formData 
+                            })
                         }).then(r => r.json());
 
                         if (res.success) {
