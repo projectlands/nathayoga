@@ -8,6 +8,7 @@ const SHEET_CLASSES = getOrCreateSheet("classes");
 const SHEET_RESERVATIONS = getOrCreateSheet("reservations");
 const SHEET_MEMBERSHIP_PACKAGES = getOrCreateSheet("membership_packages");
 const SHEET_USER_MEMBERSHIPS = getOrCreateSheet("user_memberships");
+const SHEET_PROMOS = getOrCreateSheet("promo_codes");
 
 /**
  * GET Handler
@@ -60,6 +61,15 @@ function doGet(e) {
     if (action === "membership_stats") {
       return handleGetMembershipStats();
     }
+    if (action === "promos") {
+      return responseJSON({ success: true, data: getSheetData(SHEET_PROMOS) });
+    }
+    if (action === "validate_promo") {
+      return handleValidatePromo(e.parameter.code, e.parameter.phone, e.parameter.amount);
+    }
+    if (action === "promo_stats") {
+      return handleGetPromoStats();
+    }
     return responseJSON({ success: false, message: "Action not found" });
   } catch (err) {
     return responseJSON({ success: false, message: err.toString() });
@@ -67,16 +77,17 @@ function doGet(e) {
 }
 
 /**
- * Handle POST - Booking & Create Membership
+ * Handle POST - Booking, Membership, Promo
  */
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     
-    // ACTION: Create Membership (Admin only)
-    if (data.action === "create_membership") {
-      return handleCreateMembership(data);
-    }
+    // ACTION: Create Membership (Admin)
+    if (data.action === "create_membership") return handleCreateMembership(data);
+    
+    // ACTION: Create Promo (Admin)
+    if (data.action === "create_promo") return handleCreatePromo(data);
     
     // ACTION: Booking Class
     if (!data.name || !data.phone || !data.class_id) {
@@ -88,19 +99,28 @@ function doPost(e) {
     if (!cls) return responseJSON({ success: false, message: "Class not found" });
     if (cls.quota <= 0) return responseJSON({ success: false, message: "Class full" });
 
-    // CHECK MEMBERSHIP
+    // 1. Membership Logic
     let bookingSource = "pay_per_class";
     const membership = findActiveMembership(data.phone);
-    
     if (membership) {
-      if (membership.type === "session") {
-        if (membership.remaining > 0) {
-          bookingSource = "membership";
-          updateMembershipSession(membership.id, -1);
-        }
+      if (membership.type === "session" && membership.remaining > 0) {
+        bookingSource = "membership";
+        updateMembershipSession(membership.id, -1);
       } else if (membership.type === "unlimited") {
         bookingSource = "membership";
       }
+    }
+
+    // 2. Promo Logic
+    let discountAmount = 0;
+    let promoUsed = "";
+    if (data.promo_code && bookingSource === "pay_per_class") {
+       const v = handleValidatePromo(data.promo_code, data.phone, cls.price);
+       if (v.success) {
+         discountAmount = v.discount;
+         promoUsed = data.promo_code;
+         incrementPromoUsage(data.promo_code);
+       }
     }
 
     const bookingId = "BK-" + Utilities.getUuid().substring(0, 8).toUpperCase();
@@ -112,16 +132,20 @@ function doPost(e) {
       "pending",
       new Date(),
       "pending", // payment_status
-      bookingSource // booking_source
+      bookingSource,
+      promoUsed,
+      discountAmount,
+      cls.price - discountAmount // final_amount
     ]);
 
-    // Update Class Quota
     updateQuota(data.class_id, -1);
 
     return responseJSON({
       success: true,
       booking_id: bookingId,
-      source: bookingSource
+      source: bookingSource,
+      discount: discountAmount,
+      final_price: cls.price - discountAmount
     });
   } catch (err) {
     return responseJSON({ success: false, message: err.toString() });
@@ -129,80 +153,63 @@ function doPost(e) {
 }
 
 /**
- * Membership Helpers
+ * Promo Helpers
  */
-function findActiveMembership(phone) {
-  const data = SHEET_USER_MEMBERSHIPS.getDataRange().getValues();
-  const headers = data[0];
-  const now = new Date();
+function handleValidatePromo(code, phone, amount) {
+  const promos = getSheetData(SHEET_PROMOS);
+  const promo = promos.find(p => p.code === code.toUpperCase() && p.status === "active");
   
-  // Find last active for this phone
-  const row = data.slice(1).reverse().find(r => {
-    const isPhone = String(r[2]) === String(phone);
-    const isStatus = r[8] === "active";
-    const isNotExpired = new Date(r[7]) > now;
-    return isPhone && isStatus && isNotExpired;
-  });
+  if (!promo) return { success: false, message: "Voucher tidak valid" };
+  if (new Date(promo.expired_at) < new Date()) return { success: false, message: "Voucher kadaluarsa" };
+  if (promo.used_count >= promo.max_usage) return { success: false, message: "Kuota voucher habis" };
+  if (amount < promo.minimum_payment) return { success: false, message: "Minimal transaksi belum terpenuhi" };
   
-  if (!row) return null;
+  // Calculate Discount
+  let discount = 0;
+  if (promo.type === "percentage") {
+    discount = (amount * promo.value) / 100;
+  } else {
+    discount = promo.value;
+  }
   
-  return {
-    id: row[0],
-    type: row[4],
-    remaining: row[5]
-  };
+  return { success: true, discount: discount, message: "Voucher berhasil dipasang" };
 }
 
-function updateMembershipSession(id, change) {
-  const data = SHEET_USER_MEMBERSHIPS.getDataRange().getValues();
-  const rowIndex = data.findIndex(r => r[0] === id);
-  if (rowIndex === -1) return;
-  
-  const current = data[rowIndex][5];
-  const newVal = current + change;
-  SHEET_USER_MEMBERSHIPS.getRange(rowIndex + 1, 6).setValue(newVal);
-  
-  if (newVal <= 0 && data[rowIndex][4] === "session") {
-     SHEET_USER_MEMBERSHIPS.getRange(rowIndex + 1, 9).setValue("exhausted");
+function incrementPromoUsage(code) {
+  const data = SHEET_PROMOS.getDataRange().getValues();
+  const idx = data.findIndex(r => r[1] === code.toUpperCase());
+  if (idx !== -1) {
+    const current = SHEET_PROMOS.getRange(idx + 1, 6).getValue();
+    SHEET_PROMOS.getRange(idx + 1, 6).setValue(current + 1);
   }
 }
 
-function handleCreateMembership(data) {
-  const pkgData = getSheetData(SHEET_MEMBERSHIP_PACKAGES);
-  const pkg = pkgData.find(p => p.id == data.package_id);
-  if (!pkg) return responseJSON({ success: false, message: "Package not found" });
-  
-  const id = "MB-" + Utilities.getUuid().substring(0, 8).toUpperCase();
-  const start = new Date();
-  const end = new Date();
-  end.setDate(start.getDate() + pkg.duration_days);
-  
-  SHEET_USER_MEMBERSHIPS.appendRow([
+function handleCreatePromo(data) {
+  const id = "PR-" + Utilities.getUuid().substring(0, 6).toUpperCase();
+  SHEET_PROMOS.appendRow([
     id,
-    data.user_name,
-    data.user_phone,
-    data.package_id,
-    pkg.type,
-    pkg.total_sessions,
-    start,
-    end,
+    data.code.toUpperCase(),
+    data.type,
+    data.value,
+    data.max_usage,
+    0, // used_count
+    data.expired_at,
+    data.minimum_payment || 0,
+    data.member_only || false,
     "active"
   ]);
-  
-  return responseJSON({ success: true, message: "Membership activated" });
+  return responseJSON({ success: true, message: "Promo created" });
 }
 
-function handleGetUserMemberships(phone) {
-  if (!phone) return responseJSON({ success: false, message: "Phone required" });
-  const data = getSheetData(SHEET_USER_MEMBERSHIPS);
-  const packages = getSheetData(SHEET_MEMBERSHIP_PACKAGES);
-  
-  const userList = data.filter(m => String(m.user_phone) === String(phone)).map(m => {
-    const pkg = packages.find(p => p.id == m.package_id);
-    return { ...m, package_title: pkg ? pkg.title : "Package" };
+function handleGetPromoStats() {
+  const data = getSheetData(SHEET_PROMOS);
+  return responseJSON({
+    success: true,
+    data: {
+      total_active: data.filter(p => p.status === "active").length,
+      total_usage: data.reduce((acc, p) => acc + p.used_count, 0)
+    }
   });
-  
-  return responseJSON({ success: true, data: userList });
 }
 
 /**

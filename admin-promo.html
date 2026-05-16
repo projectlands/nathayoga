@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natha Yoga | Promo Management</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        yoga: { 500: '#8b5cf6', 600: '#7c3aed', 400: '#a78bfa' },
+                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        body { background-color: #0f172a; color: white; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .yoga-gradient { background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="font-sans min-h-screen bg-dark-900 text-white" x-data="promoApp()">
+
+    <div class="flex min-h-screen">
+        
+        <!-- Sidebar Navigation -->
+        <aside :class="sidebarOpen ? 'w-72' : 'w-20'" class="glass border-r border-white/5 fixed lg:static inset-y-0 left-0 z-50 transition-all duration-300 flex flex-col overflow-hidden">
+            <div class="p-6 flex items-center gap-3 border-b border-white/5">
+                <div class="w-10 h-10 yoga-gradient rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-xl shadow-lg">N</div>
+                <div x-show="sidebarOpen" x-transition class="overflow-hidden whitespace-nowrap">
+                    <h2 class="font-display font-bold text-lg leading-none">Natha Admin</h2>
+                    <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Management</span>
+                </div>
+            </div>
+
+            <div class="flex-1 py-6 space-y-2 overflow-y-auto custom-scrollbar px-3">
+                <a href="admin.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">📊</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Dashboard</span>
+                </a>
+                <a href="admin-membership.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">💎</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Membership</span>
+                </a>
+                <a href="admin-promo.html" class="flex items-center gap-4 px-4 py-3 rounded-xl bg-yoga-500/10 text-yoga-400 border border-yoga-500/20 group transition-all">
+                    <span class="text-xl">🏷️</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Promo & Voucher</span>
+                </a>
+                <a href="scanner.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">🔍</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">QR Scanner</span>
+                </a>
+                <a href="admin-checkin.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">✅</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Check-in Page</span>
+                </a>
+            </div>
+
+            <div class="p-6 border-t border-white/5">
+                <button @click="logout()" class="flex items-center gap-4 px-4 py-3 rounded-xl w-full text-red-400 hover:bg-red-400/10 transition-all">
+                    <span class="text-xl">🚪</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col min-h-screen overflow-hidden">
+            <header class="glass h-20 border-b border-white/5 flex items-center justify-between px-8">
+                <div class="flex items-center gap-4">
+                    <button @click="sidebarOpen = !sidebarOpen" class="p-2 hover:bg-white/5 rounded-lg transition-all">
+                        <span class="text-xl" x-text="sidebarOpen ? '◀' : '▶'"></span>
+                    </button>
+                    <h1 class="text-xl font-display font-bold">Promo Management</h1>
+                </div>
+                <button @click="openCreateModal()" class="bg-yoga-500 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-yoga-500/20">+ Create Promo</button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+                <!-- Promo Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="glass p-8 rounded-[2.5rem]">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase mb-2">Active Promos</p>
+                        <h3 class="text-4xl font-display font-bold" x-text="stats.total_active">0</h3>
+                    </div>
+                    <div class="glass p-8 rounded-[2.5rem]">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase mb-2">Total Usage</p>
+                        <h3 class="text-4xl font-display font-bold" x-text="stats.total_usage">0</h3>
+                    </div>
+                </div>
+
+                <!-- Promo List -->
+                <div class="glass rounded-[3rem] overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white/5 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                                    <th class="px-8 py-6">Voucher Code</th>
+                                    <th class="px-8 py-6">Value</th>
+                                    <th class="px-8 py-6 text-center">Usage</th>
+                                    <th class="px-8 py-6 text-center">Expires</th>
+                                    <th class="px-8 py-6 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                <template x-for="p in promos" :key="p.id">
+                                    <tr class="hover:bg-white/5 transition-all">
+                                        <td class="px-8 py-6">
+                                            <div class="bg-yoga-500/20 border border-yoga-500/30 px-3 py-1 rounded-lg inline-block font-mono font-bold text-yoga-400" x-text="p.code"></div>
+                                            <p class="text-[10px] text-gray-500 mt-1" x-text="p.type"></p>
+                                        </td>
+                                        <td class="px-8 py-6">
+                                            <p class="font-bold" x-text="p.type === 'percentage' ? p.value + '%' : formatCurrency(p.value)"></p>
+                                            <p class="text-[10px] text-gray-500">Min: <span x-text="formatCurrency(p.minimum_payment)"></span></p>
+                                        </td>
+                                        <td class="px-8 py-6 text-center">
+                                            <div class="w-full bg-white/5 h-2 rounded-full max-w-[100px] mx-auto overflow-hidden">
+                                                <div class="bg-yoga-500 h-full" :style="`width: ${(p.used_count/p.max_usage)*100}%`"></div>
+                                            </div>
+                                            <p class="text-[10px] text-gray-500 mt-1"><span x-text="p.used_count"></span> / <span x-text="p.max_usage"></span> used</p>
+                                        </td>
+                                        <td class="px-8 py-6 text-center">
+                                            <p class="text-xs" x-text="formatDate(p.expired_at)"></p>
+                                        </td>
+                                        <td class="px-8 py-6 text-right">
+                                            <span :class="p.status === 'active' ? 'text-green-500' : 'text-red-500'" class="text-[10px] font-bold uppercase tracking-widest" x-text="p.status"></span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function promoApp() {
+            return {
+                sidebarOpen: window.innerWidth > 1024,
+                promos: [],
+                stats: { total_active: 0, total_usage: 0 },
+                loading: false,
+
+                async init() {
+                    if (localStorage.getItem('yoga_admin_auth') !== 'true') {
+                        window.location.href = 'admin.html';
+                        return;
+                    }
+                    this.fetchData();
+                },
+
+                async fetchData() {
+                    const [pRes, sRes] = await Promise.all([
+                        fetch(`${API.URL}?action=promos`).then(r => r.json()),
+                        fetch(`${API.URL}?action=promo_stats`).then(r => r.json())
+                    ]);
+                    if (pRes.success) this.promos = pRes.data;
+                    if (sRes.success) this.stats = sRes.data;
+                },
+
+                async openCreateModal() {
+                    const { value: formValues } = await Swal.fire({
+                        title: 'Create New Promo',
+                        background: '#1e293b', color: '#fff',
+                        html: `
+                            <div class="space-y-4 text-left">
+                                <div>
+                                    <label class="text-[10px] uppercase font-bold text-gray-400">Voucher Code</label>
+                                    <input id="swal-code" placeholder="WELCOME10" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 uppercase">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-[10px] uppercase font-bold text-gray-400">Type</label>
+                                        <select id="swal-type" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 mt-1">
+                                            <option value="percentage">Percentage (%)</option>
+                                            <option value="fixed">Fixed Amount (Rp)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] uppercase font-bold text-gray-400">Value</label>
+                                        <input id="swal-value" type="number" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 mt-1">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-[10px] uppercase font-bold text-gray-400">Max Usage</label>
+                                        <input id="swal-max" type="number" value="100" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 mt-1">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] uppercase font-bold text-gray-400">Min Payment</label>
+                                        <input id="swal-min" type="number" value="0" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 mt-1">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] uppercase font-bold text-gray-400">Expiry Date</label>
+                                    <input id="swal-expiry" type="date" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 mt-1">
+                                </div>
+                            </div>
+                        `,
+                        preConfirm: () => {
+                            return {
+                                action: 'create_promo',
+                                code: document.getElementById('swal-code').value,
+                                type: document.getElementById('swal-type').value,
+                                value: parseFloat(document.getElementById('swal-value').value),
+                                max_usage: parseInt(document.getElementById('swal-max').value),
+                                minimum_payment: parseFloat(document.getElementById('swal-min').value),
+                                expired_at: document.getElementById('swal-expiry').value
+                            }
+                        }
+                    });
+
+                    if (formValues) {
+                        const res = await fetch(API.URL, { method: 'POST', body: JSON.stringify(formValues) }).then(r => r.json());
+                        if (res.success) {
+                            Swal.fire('Success', 'Promo created successfully', 'success');
+                            this.fetchData();
+                        }
+                    }
+                },
+
+                logout() {
+                    localStorage.removeItem('yoga_admin_auth');
+                    window.location.href = 'admin.html';
+                },
+
+                formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }); },
+                formatCurrency(v) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v); }
+            }
+        }
+    </script>
+</body>
+</html>
