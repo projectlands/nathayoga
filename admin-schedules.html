@@ -267,19 +267,20 @@
                 },
 
                 initPickers() {
-                    flatpickr("#date-picker", { 
+                    this.pickers = {};
+                    this.pickers.date = flatpickr("#date-picker", { 
                         dateFormat: "Y-m-d", 
                         onChange: (dates, str) => this.formData.date = str 
                     });
-                    flatpickr("#until-date", { 
+                    this.pickers.until = flatpickr("#until-date", { 
                         dateFormat: "Y-m-d", 
                         onChange: (dates, str) => this.formData.recurring_until = str 
                     });
-                    flatpickr("#start-time", { 
+                    this.pickers.start = flatpickr("#start-time", { 
                         enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true,
                         onChange: (dates, str) => this.formData.start_time = str
                     });
-                    flatpickr("#end-time", { 
+                    this.pickers.end = flatpickr("#end-time", { 
                         enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true,
                         onChange: (dates, str) => this.formData.end_time = str
                     });
@@ -299,12 +300,32 @@
                     } catch (e) { console.error("Fetch Classes Error:", e); }
                 },
 
-                openModal() {
-                    this.formData = { 
-                        class_id: '', instructor: '', date: '', start_time: '', 
-                        end_time: '', room: 'Main Room', quota: 20, 
-                        recurring_type: 'one_time', recurring_until: '', timezone: 'WITA'
-                    };
+                openModal(schedule = null) {
+                    if (schedule) {
+                        this.editingId = schedule.id;
+                        this.formData = { ...schedule };
+                        // Ensure numeric types
+                        this.formData.quota = Number(this.formData.quota);
+                        
+                        // Sync Pickers
+                        this.$nextTick(() => {
+                            if (this.formData.date) this.pickers.date.setDate(this.formData.date);
+                            if (this.formData.start_time) this.pickers.start.setDate(this.formData.start_time);
+                            if (this.formData.end_time) this.pickers.end.setDate(this.formData.end_time);
+                            if (this.formData.recurring_until) this.pickers.until.setDate(this.formData.recurring_until);
+                        });
+                    } else {
+                        this.editingId = null;
+                        this.formData = { 
+                            class_id: '', instructor: '', date: '', start_time: '', 
+                            end_time: '', room: 'Main Room', quota: 20, 
+                            recurring_type: 'one_time', recurring_until: '', timezone: 'WITA'
+                        };
+                        this.pickers.date.clear();
+                        this.pickers.start.clear();
+                        this.pickers.end.clear();
+                        this.pickers.until.clear();
+                    }
                     this.modalOpen = true;
                 },
 
