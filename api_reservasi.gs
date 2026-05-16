@@ -364,6 +364,37 @@ function getOrCreateSheet(name) {
   return s;
 }
 
+/**
+ * FORCE SYNC HEADERS
+ * Jalankan fungsi ini satu kali dari Editor Apps Script untuk memperbarui kolom Sheet Anda.
+ */
+function syncSheetHeaders() {
+  const headers = {
+    classes: ["id", "title", "description", "category", "difficulty", "duration", "default_quota", "thumbnail", "status", "created_at", "price"],
+    schedules: ["id", "class_id", "instructor", "date", "start_time", "end_time", "timezone", "quota", "booked", "room", "recurring_type", "recurring_until", "status", "created_at"],
+    reservations: ["id", "class_id", "name", "phone", "status", "created_at", "checkin_at", "payment_status", "promo_code", "schedule_id"],
+    membership_packages: ["id", "title", "type", "total", "price", "valid_days", "status"],
+    user_memberships: ["id", "user_phone", "package_id", "remaining", "expired_at", "status"],
+    promo_codes: ["id", "code", "type", "value", "max_usage", "used_count", "minimum_payment", "expired_at", "status"]
+  };
+
+  for (let sheetName in headers) {
+    let sheet = SS.getSheetByName(sheetName);
+    if (sheet) {
+      // Update baris pertama saja (header)
+      const newHeader = headers[sheetName];
+      sheet.getRange(1, 1, 1, newHeader.length).setValues([newHeader]);
+      Logger.log("Updated headers for: " + sheetName);
+    } else {
+      // Jika sheet belum ada, buat baru
+      getOrCreateSheet(sheetName);
+      Logger.log("Created new sheet: " + sheetName);
+    }
+  }
+  
+  SpreadsheetApp.getUi().alert("Sinkronisasi Kolom Selesai! Mohon cek Google Sheet Anda.");
+}
+
 function handleGetSettings() {
   let s = SS.getSheetByName("settings");
   if (!s) { s = SS.insertSheet("settings"); s.appendRow(["key", "value"]); s.appendRow(["checkin_mode", "class_qr"]); }
