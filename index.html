@@ -229,7 +229,7 @@
                             </div>
                             <div class="flex flex-col items-start md:items-end justify-between gap-4">
                                 <span class="bg-green-500/10 text-green-500 text-[10px] font-bold px-3 py-1 rounded-full border border-green-500/20" x-text="res.status"></span>
-                                <button class="text-yoga-500 text-xs font-bold underline" @click="showQR(res.id)">Tampilkan QR</button>
+                                <button x-show="checkinMode === 'user_qr'" class="text-yoga-500 text-xs font-bold underline" @click="showQR(res.id)">Tampilkan QR</button>
                             </div>
                         </div>
                     </template>
@@ -326,8 +326,9 @@
 
     <!-- Script Application -->
     <script>
+        // 1. API CONFIG
         const API = {
-            URL: "https://script.google.com/macros/s/AKfycbz9icmh01tEjw4n5Jw9fc4qZGPmOTgOgfmQ-aIbICnR0W5aK1F7kmLshF4cPJ-ZCIpXzA/exec",
+            URL: "https://script.google.com/macros/s/AKfycbz-X_BO6ly3tvZ5_FwmHUwijXwa6UDJKT_mAmpiIkZjIPWhTA977eXtCrZ32fRpUNCzrw/exec",
             async fetch(action, params = '') {
                 const response = await fetch(`${this.URL}?action=${action}${params}`);
                 return await response.json();
@@ -338,6 +339,7 @@
             }
         };
 
+        // 2. UI HELPERS
         const UI = {
             showAlert(icon, title, text, html = '') {
                 return Swal.fire({
@@ -350,6 +352,7 @@
             }
         };
 
+        // 3. ALPINE CORE
         function yogaApp() {
             return {
                 view: 'home',
@@ -365,15 +368,16 @@
                 bookingLoading: false,
                 formData: { name: '', phone: '' },
                 searchPhone: '',
+                checkinMode: 'class_qr', // Default
 
                 async init() {
                     this.initTheme();
                     this.loadSavedData();
                     this.initPWA();
                     
-                    // Delay splash screen slightly for effect
+                    // Fetch Settings & Classes
                     setTimeout(async () => {
-                        await this.loadClasses();
+                        await Promise.all([this.loadSettings(), this.loadClasses()]);
                         this.showSplash = false;
                     }, 1500);
 
@@ -384,6 +388,15 @@
                         this.view = e.detail;
                         Swal.close();
                     });
+                },
+
+                async loadSettings() {
+                    try {
+                        const res = await API.fetch('settings');
+                        if (res.success) {
+                            this.checkinMode = res.data.checkin_mode || 'class_qr';
+                        }
+                    } catch (e) { console.error("Settings fail", e); }
                 },
 
                 initPWA() {
@@ -444,13 +457,14 @@
                 async submitBooking() {
                     if (!this.formData.name || !this.formData.phone) return UI.showAlert('warning', 'Data Kurang', 'Lengkapi nama dan nomor WhatsApp Anda.');
                     this.bookingLoading = true;
+                    
                     try {
                         const res = await API.post({ ...this.formData, class_id: this.selectedClass.id });
                         if (res.success) {
                             localStorage.setItem('yoga_name', this.formData.name);
                             localStorage.setItem('yoga_phone', this.formData.phone);
                             this.modalOpen = false;
-                            
+
                             const bookingData = {
                                 id: res.booking_id,
                                 name: this.formData.name,
@@ -458,7 +472,9 @@
                                 date: this.selectedClass.formatted_date,
                                 time: this.selectedClass.formatted_time
                             };
+
                             const waLink = this.generateWALink(bookingData);
+                            const showQR = this.checkinMode === 'user_qr';
                             
                             await Swal.fire({
                                 icon: 'success',
@@ -466,8 +482,9 @@
                                 html: `
                                     <div class="flex flex-col items-center gap-4 py-4">
                                         <p class="text-sm text-gray-500">ID: <b class="text-yoga-500">${res.booking_id}</b></p>
-                                        <div id="qrcode" class="bg-white p-3 rounded-2xl shadow-inner"></div>
-                                        <p class="text-[10px] text-gray-400 uppercase tracking-widest mt-2">Mengarahkan ke WhatsApp...</p>
+                                        ${showQR ? '<div id="qrcode" class="bg-white p-3 rounded-2xl shadow-inner"></div>' : '<div class="w-20 h-20 bg-yoga-500/10 rounded-full flex items-center justify-center text-3xl">🧘</div>'}
+                                        <p class="text-[10px] text-gray-400 uppercase tracking-widest mt-2">${showQR ? 'Tunjukkan QR saat datang' : 'Mengarahkan ke WhatsApp...'}</p>
+                                        
                                         <div class="flex flex-col w-full gap-2 mt-4">
                                             <a href="${waLink}" target="_blank" class="bg-green-500 text-white py-3 rounded-xl font-bold text-sm text-center shadow-lg hover:bg-green-600 transition-all">Hubungi Admin via WhatsApp</a>
                                             <div class="grid grid-cols-2 gap-2">
@@ -480,13 +497,14 @@
                                 background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#fff',
                                 color: document.documentElement.classList.contains('dark') ? '#fff' : '#0f172a',
                                 showConfirmButton: false,
-                                timer: 6000,
+                                timer: 8000,
                                 timerProgressBar: true,
                                 didOpen: () => {
-                                    new QRCode(document.getElementById("qrcode"), { text: res.booking_id, width: 120, height: 120, colorDark: "#0f172a" });
-                                    setTimeout(() => { window.open(waLink, '_blank'); }, 2000);
+                                    if(showQR) new QRCode(document.getElementById("qrcode"), { text: res.booking_id, width: 120, height: 120, colorDark: "#0f172a" });
+                                    setTimeout(() => { window.open(waLink, '_blank'); }, 2500);
                                 }
                             });
+
                             await this.loadClasses();
                         } else {
                             UI.showAlert('error', 'Gagal', res.message);
@@ -496,7 +514,7 @@
                 },
 
                 generateWALink(b) {
-                    const waAdmin = "6281234567890";
+                    const waAdmin = "6281234567890"; // GANTI DENGAN NOMOR WA ANDA
                     const msg = `Halo Admin Natha Yoga,\n\nSaya baru saja melakukan reservasi kelas yoga.\n\n*Detail Booking:*\n- Booking ID: ${b.id}\n- Nama: ${b.name}\n- Kelas: ${b.class}\n- Tanggal: ${b.date}\n- Jam: ${b.time}\n\nMohon konfirmasi reservasi saya 🙏`;
                     return `https://wa.me/${waAdmin}?text=${encodeURIComponent(msg)}`;
                 },

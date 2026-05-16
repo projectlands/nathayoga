@@ -65,15 +65,21 @@
                         </template>
                     </select>
                     
-                    <button @click="generateToken()" :disabled="!selectedClassId || loading" class="w-full yoga-gradient py-5 rounded-[1.5rem] font-bold text-white shadow-xl shadow-yoga-500/20 active:scale-95 transition-all mt-4 flex items-center justify-center gap-3">
+                    <button x-show="checkinMode === 'class_qr'" @click="generateToken()" :disabled="!selectedClassId || loading" class="w-full yoga-gradient py-5 rounded-[1.5rem] font-bold text-white shadow-xl shadow-yoga-500/20 active:scale-95 transition-all mt-4 flex items-center justify-center gap-3">
                         <span x-show="loading" class="animate-spin border-2 border-white border-t-transparent rounded-full h-5 w-5"></span>
                         <span x-text="token ? 'Regenerate QR' : 'Generate QR Check-in'"></span>
                     </button>
+
+                    <!-- User QR Mode Info -->
+                    <div x-show="checkinMode === 'user_qr'" class="mt-4 p-6 bg-yoga-500/10 border border-yoga-500/20 rounded-2xl">
+                        <p class="text-sm text-yoga-300 mb-4">Sistem saat ini dalam mode <b>User QR</b>. Admin harus memindai QR peserta.</p>
+                        <a href="scanner.html" class="block w-full bg-yoga-500 py-4 rounded-xl font-bold text-center active:scale-95 transition-all">Buka Scanner Admin</a>
+                    </div>
                 </div>
             </div>
 
             <!-- QR Display -->
-            <div x-show="token" x-transition class="glass p-10 rounded-[3rem] text-center flex flex-col items-center">
+            <div x-show="checkinMode === 'class_qr' && token" x-transition class="glass p-10 rounded-[3rem] text-center flex flex-col items-center">
                 <h3 class="text-xl font-bold mb-2">Scan untuk Check-in</h3>
                 <p class="text-gray-400 text-sm mb-8" x-text="`Sesi: ${selectedClassTitle}`"></p>
                 
@@ -136,7 +142,7 @@
     <script>
         function adminCheckin() {
             return {
-                apiUrl: "https://script.google.com/macros/s/AKfycbxn9nx9olYW6_KzJM47FDrLUc8BpR1cFCMA7oxe_1GytrLvxs7vOTp-xS6RayZoq9KbBQ/exec",
+                apiUrl: "https://script.google.com/macros/s/AKfycbz-X_BO6ly3tvZ5_FwmHUwijXwa6UDJKT_mAmpiIkZjIPWhTA977eXtCrZ32fRpUNCzrw/exec",
                 classes: [],
                 selectedClassId: '',
                 selectedClassTitle: '',
@@ -146,9 +152,17 @@
                 loading: false,
                 attendance: { total_present: 0, list: [] },
                 syncInterval: null,
+                checkinMode: 'class_qr',
 
                 async init() {
-                    await this.loadClasses();
+                    await Promise.all([this.loadSettings(), this.loadClasses()]);
+                },
+
+                async loadSettings() {
+                    const res = await fetch(`${this.apiUrl}?action=settings`).then(r => r.json());
+                    if (res.success) {
+                        this.checkinMode = res.data.checkin_mode || 'class_qr';
+                    }
                 },
 
                 async loadClasses() {

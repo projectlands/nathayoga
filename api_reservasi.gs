@@ -34,10 +34,68 @@ function doGet(e) {
     if (action === "attendance_list") {
       return handleAttendanceList(e.parameter.class_id);
     }
+    if (action === "settings") {
+      return handleGetSettings();
+    }
+    if (action === "scan_user") {
+      return handleScanUser(e.parameter.booking_id);
+    }
     return responseJSON({ success: false, message: "Action not found" });
   } catch (err) {
     return responseJSON({ success: false, message: err.toString() });
   }
+}
+
+/**
+ * Get System Settings
+ */
+function handleGetSettings() {
+  let sheetSettings = SS.getSheetByName("settings");
+  if (!sheetSettings) {
+    sheetSettings = SS.insertSheet("settings");
+    sheetSettings.appendRow(["key", "value"]);
+    sheetSettings.appendRow(["checkin_mode", "class_qr"]); // Default mode
+  }
+  
+  const data = sheetSettings.getDataRange().getValues().slice(1);
+  const settings = {};
+  data.forEach(row => settings[row[0]] = row[1]);
+  
+  return responseJSON({ success: true, data: settings });
+}
+
+/**
+ * Handle Admin Scanning User QR
+ */
+function handleScanUser(bookingId) {
+  if (!bookingId) return responseJSON({ success: false, message: "Booking ID required" });
+  
+  const data = SHEET_RESERVATIONS.getDataRange().getValues();
+  const headers = data[0];
+  const rows = data.slice(1);
+  
+  const rowIndex = rows.findIndex(row => row[0] === bookingId);
+  if (rowIndex === -1) return responseJSON({ success: false, message: "Booking ID tidak ditemukan" });
+  
+  const reservation = rows[rowIndex];
+  const statusIndex = headers.indexOf("status");
+  
+  if (reservation[statusIndex] === "checked_in") {
+    return responseJSON({ success: false, message: "Peserta sudah check-in", data: { name: reservation[2] } });
+  }
+
+  // Update Status
+  SHEET_RESERVATIONS.getRange(rowIndex + 2, statusIndex + 1).setValue("checked_in");
+  const checkinIndex = headers.indexOf("checkin_at");
+  if (checkinIndex !== -1) {
+    SHEET_RESERVATIONS.getRange(rowIndex + 2, checkinIndex + 1).setValue(new Date());
+  }
+
+  return responseJSON({
+    success: true,
+    message: "Check-in Berhasil!",
+    data: { name: reservation[2] }
+  });
 }
 
 /**
