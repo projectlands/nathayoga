@@ -318,7 +318,17 @@ function formatIndonesianDate(dateVal) {
 
 function formatTime12(t) {
   if (!t) return "";
-  let [h, m] = t.split(':').map(Number);
+  let h, m;
+  if (t instanceof Date) {
+    h = t.getHours();
+    m = t.getMinutes();
+  } else {
+    try {
+      [h, m] = t.toString().split(':').map(Number);
+    } catch (e) { return t; }
+  }
+  
+  if (h === undefined || isNaN(h)) return t;
   const ampm = h >= 12 ? 'PM' : 'AM';
   h = (h % 12) || 12;
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
