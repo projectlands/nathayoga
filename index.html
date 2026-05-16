@@ -540,15 +540,9 @@
             }
         }
     </script>
-
-                showQR(id) {
-                    UI.showAlert('info', 'QR Booking', '', `<div class="flex flex-col items-center py-4"><div id="qrcode-view" class="bg-white p-3 rounded-2xl"></div><p class="mt-4 font-bold text-yoga-500">${id}</p></div>`);
-                    new QRCode(document.getElementById("qrcode-view"), { text: id, width: 150, height: 150 });
-                },
-
-                formatPrice(p) {
-                    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(p);
-                }
+</body>
+</html>
+}
             }
         }
     </script>
