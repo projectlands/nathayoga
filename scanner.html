@@ -109,6 +109,7 @@
     <!-- Audio for Scan -->
     <audio id="scan-sound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" preload="auto"></audio>
 
+    <script src="js/api.js"></script>
     <script>
         function scannerApp() {
             return {
@@ -116,7 +117,7 @@
                 html5QrCode: null,
                 isProcessing: false,
                 currentCamera: "environment", // 'user' or 'environment'
-                apiUrl: "https://script.google.com/macros/s/AKfycbzSWJ0X-TmIniaJWnYOAw2PLbH0lAjGxejuX6RAcM55Wi0UaeK7NCCH__On_BOVf4ZM/exec",
+                apiUrl: API.URL,
 
                 async startScanner() {
                     this.html5QrCode = new Html5Qrcode("reader");

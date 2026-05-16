@@ -20,6 +20,7 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    <script src="js/api.js"></script>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     
     <script>
@@ -326,9 +327,8 @@
 
     <!-- Script Application -->
     <script>
-        // 1. API CONFIG
-        const API = {
-            URL: "https://script.google.com/macros/s/AKfycbzSWJ0X-TmIniaJWnYOAw2PLbH0lAjGxejuX6RAcM55Wi0UaeK7NCCH__On_BOVf4ZM/exec",
+        const API_CONFIG = {
+            URL: API.URL,
             async fetch(action, params = '') {
                 const response = await fetch(`${this.URL}?action=${action}${params}`);
                 return await response.json();
