@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natha Yoga | Premium Studio Reservation</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        yoga: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        body { background-color: #0f172a; color: white; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .yoga-gradient { background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); }
+        .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
+        @keyframes loading { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+    </style>
+</head>
+<body class="min-h-screen selection:bg-yoga-500/30" x-data="yogaApp()">
+
+    <!-- Header Navigation -->
+    <nav class="fixed top-0 inset-x-0 z-40 px-6 py-4">
+        <div class="max-w-5xl mx-auto flex justify-between items-center glass rounded-2xl px-6 py-3">
+            <div class="flex items-center gap-2 cursor-pointer" @click="view = 'home'; loadClasses()">
+                <div class="w-8 h-8 yoga-gradient rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-yoga-500/30">N</div>
+                <span class="font-display font-bold text-xl tracking-tight">Natha Yoga</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button @click="view = 'my-bookings'" class="text-sm font-semibold hover:text-yoga-400 transition-colors" :class="view === 'my-bookings' ? 'text-yoga-400' : 'text-gray-300'">My Bookings</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="pt-32 pb-12 px-6 text-center">
+        <div class="max-w-3xl mx-auto">
+            <h1 class="text-4xl md:text-6xl font-display font-bold mb-6 leading-tight">
+                Temukan Ketenangan <br> 
+                <span class="bg-gradient-to-r from-yoga-400 to-pink-400 bg-clip-text text-transparent">Di Setiap Gerakan</span>
+            </h1>
+            <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+                Pesan kelas yoga favoritmu dengan mudah. Studio modern dengan instruktur bersertifikat untuk perjalanan spiritualmu.
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 pb-24">
+        
+        <!-- View: Home (Classes) -->
+        <div x-show="view === 'home'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+            
+            <!-- Filter / Search Mockup (Visual Only) -->
+            <div class="flex flex-wrap gap-3 mb-8 justify-center">
+                <button class="px-5 py-2 rounded-full glass border-yoga-500 bg-yoga-500/20 text-white font-semibold text-sm transition-all">Semua Kelas</button>
+                <button class="px-5 py-2 rounded-full glass hover:bg-white/5 text-gray-400 text-sm transition-all">Pagi</button>
+                <button class="px-5 py-2 rounded-full glass hover:bg-white/5 text-gray-400 text-sm transition-all">Sore</button>
+            </div>
+
+            <!-- Loading Skeleton -->
+            <div x-show="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <template x-for="i in 3">
+                    <div class="glass rounded-3xl p-4 h-[400px]">
+                        <div class="skeleton w-full h-48 rounded-2xl mb-6"></div>
+                        <div class="skeleton w-2/3 h-6 rounded-lg mb-3"></div>
+                        <div class="skeleton w-1/2 h-4 rounded-lg mb-8"></div>
+                        <div class="skeleton w-full h-12 rounded-xl"></div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Grid Classes -->
+            <div x-show="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <template x-for="cls in classes" :key="cls.id">
+                    <div class="glass rounded-[2rem] p-5 group hover:border-yoga-500/50 transition-all duration-500 flex flex-col">
+                        <!-- Image Area -->
+                        <div class="relative h-48 rounded-2xl overflow-hidden mb-6">
+                            <img :src="`https://source.unsplash.com/featured/800x600?yoga,nature&sig=${cls.id}`" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Yoga Class">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                            <div class="absolute bottom-4 left-4">
+                                <span class="bg-yoga-500 text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full" x-text="cls.instructor"></span>
+                            </div>
+                        </div>
+
+                        <!-- Content -->
+                        <h3 class="text-xl font-bold mb-2 font-display" x-text="cls.title"></h3>
+                        <div class="space-y-2 mb-6">
+                            <div class="flex items-center text-gray-400 text-sm gap-2">
+                                <span class="text-yoga-400">📅</span> <span x-text="cls.formatted_date"></span>
+                            </div>
+                            <div class="flex items-center text-gray-400 text-sm gap-2">
+                                <span class="text-yoga-400">🕒</span> <span x-text="cls.formatted_time"></span>
+                            </div>
+                            
+                            <!-- Quota Logic -->
+                            <div class="mt-4">
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-500">Ketersediaan Slot</span>
+                                    <span :class="cls.booked >= cls.quota ? 'text-red-400' : 'text-yoga-400'" x-text="cls.booked >= cls.quota ? 'Full Booked' : `${cls.booked} / ${cls.quota} Slot`"></span>
+                                </div>
+                                <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                                    <div class="h-full yoga-gradient transition-all duration-1000" :style="`width: ${(cls.booked/cls.quota)*100}%`" :class="cls.booked >= cls.quota ? 'from-red-500 to-red-600' : ''"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto pt-4 flex items-center justify-between">
+                            <span class="text-lg font-bold text-white" x-text="formatPrice(cls.price)"></span>
+                            <button @click="openBooking(cls)" 
+                                :disabled="cls.booked >= cls.quota"
+                                class="px-6 py-2.5 rounded-xl font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed text-sm"
+                                :class="cls.booked >= cls.quota ? 'bg-gray-700' : 'yoga-gradient hover:shadow-lg hover:shadow-yoga-500/20 active:scale-95'">
+                                <span x-text="cls.booked >= cls.quota ? 'FULL' : 'BOOK'"></span>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- View: My Bookings -->
+        <div x-show="view === 'my-bookings'" class="max-w-2xl mx-auto" x-transition>
+            <div class="glass rounded-[2rem] p-8">
+                <h2 class="text-3xl font-display font-bold mb-6 text-center">Cek Booking Saya</h2>
+                
+                <div class="flex gap-3 mb-10">
+                    <input type="tel" x-model="searchPhone" placeholder="Masukkan Nomor WhatsApp..." class="flex-1 bg-gray-900 border border-gray-700 rounded-2xl px-6 py-4 focus:outline-none focus:border-yoga-500 transition-all">
+                    <button @click="checkMyBookings()" class="bg-yoga-500 px-8 rounded-2xl font-bold hover:bg-yoga-600 transition-all">Cek</button>
+                </div>
+
+                <div class="space-y-4">
+                    <template x-for="res in myBookings" :key="res.id">
+                        <div class="bg-gray-800/50 border border-gray-700 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-4">
+                            <div>
+                                <span class="text-[10px] font-bold text-yoga-400 uppercase tracking-widest" x-text="res.id"></span>
+                                <h4 class="text-lg font-bold" x-text="res.class_title"></h4>
+                                <p class="text-sm text-gray-400" x-text="`${res.class_date} • ${res.class_time}`"></p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="bg-green-500/20 text-green-400 text-xs px-3 py-1 rounded-full border border-green-500/30" x-text="res.status"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Booking Modal -->
+    <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md" x-cloak x-transition>
+        <div class="glass w-full max-w-md rounded-[2.5rem] p-10 relative overflow-hidden" @click.away="modalOpen = false">
+            <div class="absolute top-0 right-0 w-32 h-32 yoga-gradient opacity-10 blur-3xl rounded-full"></div>
+            
+            <h2 class="text-3xl font-display font-bold mb-2">Pesan Kelas</h2>
+            <p class="text-gray-400 text-sm mb-8">Anda akan memesan kelas <span class="text-yoga-400 font-bold" x-text="selectedClass?.title"></span></p>
+
+            <form @submit.prevent="submitBooking" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Nama Lengkap</label>
+                    <input type="text" x-model="formData.name" class="w-full bg-gray-900 border border-gray-700 rounded-2xl px-6 py-4 focus:outline-none focus:border-yoga-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Nomor WhatsApp</label>
+                    <input type="tel" x-model="formData.phone" class="w-full bg-gray-900 border border-gray-700 rounded-2xl px-6 py-4 focus:outline-none focus:border-yoga-500 transition-all" placeholder="0812...">
+                </div>
+                
+                <div class="pt-6 flex flex-col gap-3">
+                    <button type="submit" :disabled="bookingLoading" class="w-full yoga-gradient py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50">
+                        <span x-show="bookingLoading" class="animate-spin border-2 border-white border-t-transparent rounded-full h-5 w-5"></span>
+                        <span x-text="bookingLoading ? 'Memproses...' : 'Konfirmasi Pesanan'"></span>
+                    </button>
+                    <button type="button" @click="modalOpen = false" class="w-full bg-transparent hover:bg-white/5 py-3 rounded-xl text-gray-500 text-sm font-semibold transition-all">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        /**
+         * 1. API MODULE - Handles communication with Google Apps Script
+         */
+        const API = {
+            // URL Web App Google Apps Script
+            URL: "https://script.google.com/macros/s/AKfycbyCHl2CXdehYlvu0caU-J8jdClpeIsBsGBCEIMJK2rIB5iPtc5OelQ5-3Y2Y_gXEHcMWA/exec",
+
+            async fetchClasses() {
+                try {
+                    const response = await fetch(`${this.URL}?action=classes`);
+                    return await response.json();
+                } catch (error) { throw error; }
+            },
+
+            async createBooking(data) {
+                try {
+                    const response = await fetch(this.URL, {
+                        method: "POST",
+                        body: JSON.stringify(data)
+                    });
+                    return await response.json();
+                } catch (error) { throw error; }
+            },
+
+            async fetchMyBookings(phone) {
+                try {
+                    const response = await fetch(`${this.URL}?action=my_bookings&phone=${phone}`);
+                    return await response.json();
+                } catch (error) { throw error; }
+            }
+        };
+
+        /**
+         * 2. UI MODULE - Handles standardized feedback
+         */
+        const UI = {
+            showAlert(icon, title, text, html = '') {
+                return Swal.fire({
+                    icon: icon,
+                    title: title,
+                    text: text,
+                    html: html,
+                    background: '#111827',
+                    color: '#fff',
+                    confirmButtonColor: icon === 'error' ? '#ef4444' : '#8b5cf6',
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-gray-800 shadow-2xl',
+                        confirmButton: 'rounded-xl px-8 py-3 font-bold'
+                    }
+                });
+            },
+            formatCurrency(amount) {
+                return new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0
+                }).format(amount);
+            }
+        };
+
+        /**
+         * 3. BOOKING LOGIC - Handles persistence
+         */
+        const Booking = {
+            saveUserData(name, phone) {
+                localStorage.setItem('yoga_user_name', name);
+                localStorage.setItem('yoga_user_phone', phone);
+            },
+            getUserData() {
+                return {
+                    name: localStorage.getItem('yoga_user_name') || '',
+                    phone: localStorage.getItem('yoga_user_phone') || ''
+                };
+            }
+        };
+
+        /**
+         * 4. ALPINE APPLICATION - Main controller
+         */
+        function yogaApp() {
+            return {
+                loading: true,
+                classes: [],
+                modalOpen: false,
+                selectedClass: null,
+                bookingLoading: false,
+                myBookings: [],
+                view: 'home',
+                formData: { name: '', phone: '' },
+                searchPhone: '',
+
+                async init() {
+                    const userData = Booking.getUserData();
+                    this.formData.name = userData.name;
+                    this.formData.phone = userData.phone;
+                    this.searchPhone = userData.phone;
+                    await this.loadClasses();
+                },
+
+                async loadClasses() {
+                    this.loading = true;
+                    try {
+                        const result = await API.fetchClasses();
+                        if (result.success) this.classes = result.data;
+                    } catch (e) {
+                        console.error(e);
+                        UI.showAlert('error', 'Gagal Memuat', 'Terjadi kesalahan saat mengambil jadwal kelas.');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                openBooking(cls) {
+                    if (cls.booked >= cls.quota) {
+                        UI.showAlert('info', 'Kelas Penuh', 'Mohon pilih jadwal kelas lainnya.');
+                        return;
+                    }
+                    this.selectedClass = cls;
+                    this.modalOpen = true;
+                },
+
+                async submitBooking() {
+                    if (!this.formData.name.trim() || !this.formData.phone.trim()) {
+                        UI.showAlert('warning', 'Data Kosong', 'Harap isi nama dan nomor WhatsApp Anda.');
+                        return;
+                    }
+
+                    this.bookingLoading = true;
+                    try {
+                        const result = await API.createBooking({
+                            class_id: this.selectedClass.id,
+                            name: this.formData.name,
+                            phone: this.formData.phone
+                        });
+
+                        if (result.success) {
+                            Booking.saveUserData(this.formData.name, this.formData.phone);
+                            this.modalOpen = false;
+                            
+                            // Success Alert with QR
+                            await UI.showAlert('success', 'Booking Berhasil!', '', `
+                                <div class="flex flex-col items-center gap-4 py-4">
+                                    <p class="text-sm text-gray-400">ID Booking: <b class="text-white">${result.booking_id}</b></p>
+                                    <div id="qrcode" class="bg-white p-2 rounded-xl inline-block"></div>
+                                    <p class="text-xs text-gray-500 mt-2">Simpan QR ini untuk verifikasi</p>
+                                </div>
+                            `);
+
+                            // Generate QR code
+                            new QRCode(document.getElementById("qrcode"), {
+                                text: result.booking_id,
+                                width: 128,
+                                height: 128
+                            });
+
+                            await this.loadClasses();
+                        } else {
+                            UI.showAlert('error', 'Booking Gagal', result.message);
+                        }
+                    } catch (e) {
+                        UI.showAlert('error', 'Koneksi Gagal', 'Gagal memproses data ke server.');
+                    } finally {
+                        this.bookingLoading = false;
+                    }
+                },
+
+                async checkMyBookings() {
+                    if (!this.searchPhone.trim()) {
+                        UI.showAlert('warning', 'Input Kosong', 'Masukkan nomor WhatsApp Anda.');
+                        return;
+                    }
+
+                    this.loading = true;
+                    try {
+                        const result = await API.fetchMyBookings(this.searchPhone);
+                        if (result.success) {
+                            this.myBookings = result.data;
+                            this.view = 'my-bookings';
+                            if (this.myBookings.length === 0) {
+                                UI.showAlert('info', 'Tidak Ditemukan', 'Belum ada riwayat booking untuk nomor ini.');
+                            }
+                        }
+                    } catch (e) {
+                        UI.showAlert('error', 'Error', 'Gagal mengambil data booking.');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                formatPrice(p) { return UI.formatCurrency(p); }
+            }
+        }
+    </script>
+</body>
+</html>
