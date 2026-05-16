@@ -22,6 +22,9 @@ function doGet(e) {
     if (action === "classes") {
       return getClasses();
     }
+    if (action === "settings") {
+      return handleGetSettings();
+    }
     if (action === "my_bookings") {
       return getMyBookings(e.parameter.phone);
     }
@@ -710,4 +713,188 @@ function setupInitialData() {
   resSheet.appendRow(["id", "class_id", "name", "phone", "status", "created_at"]);
   
   SpreadsheetApp.getUi().alert("Setup Premium Selesai!");
+}
+
+function getOrCreateSheet(name) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    // Add default headers based on sheet name
+    if (name === "classes") sheet.appendRow(["id", "title", "instructor", "date", "time", "quota", "booked", "price", "status"]);
+    if (name === "reservations") sheet.appendRow(["id", "class_id", "name", "phone", "status", "created_at", "checkin_at", "payment_status", "promo_code"]);
+    if (name === "membership_packages") sheet.appendRow(["id", "title", "type", "total", "price", "valid_days", "status"]);
+    if (name === "user_memberships") sheet.appendRow(["id", "user_phone", "package_id", "remaining", "expired_at", "status"]);
+    if (name === "promo_codes") sheet.appendRow(["id", "code", "type", "value", "max_usage", "used_count", "minimum_payment", "expired_at", "status"]);
+  }
+  return sheet;
+}
+
+function normalizePhone(phone) {
+  if (!phone) return "";
+  return phone.toString().replace(/[^0-9]/g, "");
+}
+
+/**
+ * Handle Admin Update Status (Payment, Attendance, etc.)
+ */
+function handleUpdateStatus(bookingId, type, value) {
+  if (!bookingId || !type) return responseJSON({ success: false, message: "Missing required fields" });
+  
+  const data = SHEET_RESERVATIONS.getDataRange().getValues();
+  const headers = data[0];
+  const colIndex = headers.indexOf(type);
+  
+  if (colIndex === -1) return responseJSON({ success: false, message: "Invalid update type: " + type });
+  
+  const rowIndex = data.findIndex(row => row[0] === bookingId);
+  if (rowIndex === -1) return responseJSON({ success: false, message: "Booking not found" });
+  
+  // Update the value
+  SHEET_RESERVATIONS.getRange(rowIndex + 1, colIndex + 1).setValue(value);
+  
+  return responseJSON({ success: true, message: "Status updated successfully" });
+}
+
+/**
+ * Get All Bookings for Admin
+ */
+function handleGetAdminBookings() {
+  const reservations = getSheetData(SHEET_RESERVATIONS);
+  const classes = getSheetData(SHEET_CLASSES);
+  
+  const data = reservations.map(r => {
+    const cls = classes.find(c => c.id == r.class_id);
+    return {
+      ...r,
+      class_title: cls ? cls.title : "Unknown",
+      class_date: cls ? formatIndonesianDate(cls.date) : ""
+    };
+  }).reverse(); // Latest first
+  
+  return responseJSON({ success: true, data: data });
+}
+
+/**
+ * Membership Stats
+ */
+function handleGetMembershipStats() {
+  const members = getSheetData(SHEET_USER_MEMBERSHIPS);
+  const stats = {
+    total_members: members.length,
+    active_members: members.filter(m => m.status === "active").length,
+    expiring_soon: members.filter(m => {
+      const exp = new Date(m.expired_at);
+      const now = new Date();
+      return exp > now && exp < new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    }).length
+  };
+  return responseJSON({ success: true, data: stats });
+}
+
+/**
+ * Promo Stats
+ */
+function handleGetPromoStats() {
+  const promos = getSheetData(SHEET_PROMOS);
+  const stats = {
+    total_active: promos.filter(p => p.status === "active").length,
+    total_usage: promos.reduce((acc, p) => acc + (Number(p.used_count) || 0), 0)
+  };
+  return responseJSON({ success: true, data: stats });
+}
+
+/**
+ * Get User Memberships
+ */
+function handleGetUserMemberships(phone) {
+  if (!phone) return responseJSON({ success: false, message: "Phone required" });
+  const members = getSheetData(SHEET_USER_MEMBERSHIPS);
+  const packages = getSheetData(SHEET_MEMBERSHIP_PACKAGES);
+  const cleanPhone = normalizePhone(phone);
+  
+  const userMembers = members.filter(m => normalizePhone(m.user_phone) === cleanPhone).map(m => {
+    const pkg = packages.find(p => p.id == m.package_id);
+    return { ...m, package_title: pkg ? pkg.title : "Unknown Package" };
+  });
+  
+  return responseJSON({ success: true, data: userMembers });
+}
+
+/**
+ * Create Membership (Admin)
+ */
+function handleCreateMembership(data) {
+  const id = "MBR-" + Utilities.getUuid().substring(0, 8).toUpperCase();
+  SHEET_USER_MEMBERSHIPS.appendRow([
+    id, 
+    "'" + data.user_phone, 
+    data.package_id, 
+    data.remaining, 
+    data.expired_at, 
+    "active"
+  ]);
+  return responseJSON({ success: true, id: id });
+}
+
+/**
+ * Create Promo (Admin)
+ */
+function handleCreatePromo(data) {
+  const id = "PRM-" + Utilities.getUuid().substring(0, 8).toUpperCase();
+  SHEET_PROMOS.appendRow([
+    id, 
+    data.code.toUpperCase(), 
+    data.type, 
+    data.value, 
+    data.max_usage, 
+    0, 
+    data.minimum_payment || 0, 
+    data.expired_at, 
+    "active"
+  ]);
+  return responseJSON({ success: true, id: id });
+}
+
+/**
+ * Validate Promo Code
+ */
+function handleValidatePromo(code, phone, amount) {
+  if (!code) return responseJSON({ success: false, message: "Promo code required" });
+  
+  const promos = getSheetData(SHEET_PROMOS);
+  const promo = promos.find(p => p.code.toString().toUpperCase() === code.toUpperCase());
+  
+  if (!promo) return responseJSON({ success: false, message: "Voucher tidak valid" });
+  if (promo.status !== "active") return responseJSON({ success: false, message: "Voucher sudah tidak aktif" });
+  
+  // Check Expiry
+  if (promo.expired_at) {
+    const exp = new Date(promo.expired_at);
+    if (new Date() > exp) return responseJSON({ success: false, message: "Voucher sudah kadaluwarsa" });
+  }
+  
+  // Check Usage Limit
+  if (Number(promo.used_count) >= Number(promo.max_usage)) {
+    return responseJSON({ success: false, message: "Kuota voucher sudah habis" });
+  }
+  
+  // Check Min Payment
+  if (amount && Number(amount) < Number(promo.minimum_payment)) {
+    return responseJSON({ success: false, message: "Minimal transaksi " + formatCurrency(promo.minimum_payment) });
+  }
+  
+  // Calculate Discount
+  let discount = 0;
+  if (promo.type === "percentage") {
+    discount = (Number(amount) * Number(promo.value)) / 100;
+  } else {
+    discount = Number(promo.value);
+  }
+  
+  return responseJSON({ success: true, discount: discount, code: code });
+}
+
+function formatCurrency(v) {
+  return "Rp " + Number(v).toLocaleString('id-ID');
 }
