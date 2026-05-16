@@ -401,7 +401,19 @@ function checkScheduleConflict(n) {
   return { isConflict: false };
 }
 
-function parseT(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+function parseT(t) {
+  if (!t) return 0;
+  let h, m;
+  if (t instanceof Date) {
+    h = t.getHours();
+    m = t.getMinutes();
+  } else {
+    try {
+      [h, m] = t.toString().split(':').map(Number);
+    } catch (e) { return 0; }
+  }
+  return (h || 0) * 60 + (m || 0);
+}
 function isToday(d) { return new Date(d).toDateString() === new Date().toDateString(); }
 
 function getOrCreateSheet(name) {
