@@ -235,11 +235,30 @@ function handleCreateSchedule(data) {
 function handleGetAdminSchedules() {
   const schedules = getSheetData(SHEET_SCHEDULES);
   const classes = getSheetData(SHEET_CLASSES);
-  const result = schedules.filter(s => s.status !== "deleted").map(s => {
-    const cls = classes.find(c => c.id === s.class_id);
-    return { ...s, class_title: cls ? cls.title : "Unknown", formatted_time: `${formatTime12(s.start_time)} - ${formatTime12(s.end_time)}` };
-  }).reverse();
-  return responseJSON({ success: true, data: result });
+  
+  const result = [];
+  const activeSchedules = schedules.filter(s => s.status !== "deleted");
+  
+  activeSchedules.forEach(s => {
+    try {
+      const cls = classes.find(c => c.id == s.class_id);
+      result.push({
+        ...s,
+        class_title: cls ? cls.title : "Unknown Class",
+        formatted_time: `${formatTime12(s.start_time)} - ${formatTime12(s.end_time)}`
+      });
+    } catch (e) {
+      Logger.log("Error mapping schedule ID " + s.id + ": " + e.toString());
+      // Tetap masukkan data mentah jika gagal formatting
+      result.push({
+        ...s,
+        class_title: "Error Loading Info",
+        formatted_time: s.start_time + " - " + s.end_time
+      });
+    }
+  });
+  
+  return responseJSON({ success: true, data: result.reverse() });
 }
 
 function handleDeleteSchedule(id) {

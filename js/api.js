@@ -3,7 +3,7 @@
  */
 const API = {
     // GANTI DENGAN URL WEB APP ANDA
-    URL: "https://script.google.com/macros/s/AKfycbwvdlyN94jXqyuiD2XYEg4sRgZK5WQwZTTpM32DzP3xK8YcI3Oszpe8tEvkz-ebLG3dqA/exec",
+    URL: "https://script.google.com/macros/s/AKfycbx7UivpuFAoSSMaBcYxR0ESj4Ss6MbPUGw6xZnIKz926kAOqy-rarweaAgVsfQ9CdVHSQ/exec",
 
     async fetchClasses() {
         try {
