@@ -327,7 +327,8 @@
 
     <!-- Script Application -->
     <script>
-        const API_CONFIG = {
+        // 1. API CONFIG
+        const APP_API = {
             URL: API.URL,
             async fetch(action, params = '') {
                 const response = await fetch(`${this.URL}?action=${action}${params}`);
@@ -392,7 +393,7 @@
 
                 async loadSettings() {
                     try {
-                        const res = await API.fetch('settings');
+                        const res = await APP_API.fetch('settings');
                         if (res.success) {
                             this.checkinMode = res.data.checkin_mode || 'class_qr';
                         }
@@ -442,7 +443,7 @@
                 async loadClasses() {
                     this.loading = true;
                     try {
-                        const res = await API.fetch('classes');
+                        const res = await APP_API.fetch('classes');
                         if (res.success) this.classes = res.data;
                     } catch (e) {
                         this.isOnline = false;
@@ -459,7 +460,7 @@
                     this.bookingLoading = true;
                     
                     try {
-                        const res = await API.post({ ...this.formData, class_id: this.selectedClass.id });
+                        const res = await APP_API.post({ ...this.formData, class_id: this.selectedClass.id });
                         if (res.success) {
                             localStorage.setItem('yoga_name', this.formData.name);
                             localStorage.setItem('yoga_phone', this.formData.phone);
@@ -523,10 +524,22 @@
                     if (!this.searchPhone) return UI.showAlert('warning', 'Input Kosong', 'Masukkan nomor WA Anda.');
                     this.loading = true;
                     try {
-                        const res = await API.fetch('my_bookings', `&phone=${this.searchPhone.replace(/[^0-9]/g, "")}`);
+                        const res = await APP_API.fetch('my_bookings', `&phone=${this.searchPhone.replace(/[^0-9]/g, "")}`);
                         if (res.success) this.myBookings = res.data;
                     } finally { this.loading = false; }
                 },
+
+                showQR(id) {
+                    UI.showAlert('info', 'QR Booking', '', `<div class="flex flex-col items-center py-4"><div id="qrcode-view" class="bg-white p-3 rounded-2xl"></div><p class="mt-4 font-bold text-yoga-500">${id}</p></div>`);
+                    new QRCode(document.getElementById("qrcode-view"), { text: id, width: 150, height: 150 });
+                },
+
+                formatPrice(p) {
+                    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(p);
+                }
+            }
+        }
+    </script>
 
                 showQR(id) {
                     UI.showAlert('info', 'QR Booking', '', `<div class="flex flex-col items-center py-4"><div id="qrcode-view" class="bg-white p-3 rounded-2xl"></div><p class="mt-4 font-bold text-yoga-500">${id}</p></div>`);
