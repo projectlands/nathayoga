@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natha Yoga | Admin Dashboard</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        yoga: { 500: '#8b5cf6', 600: '#7c3aed', 400: '#a78bfa' },
+                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        body { background-color: #0f172a; color: white; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .yoga-gradient { background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="font-sans min-h-screen" x-data="adminApp()">
+
+    <!-- Login View -->
+    <template x-if="!isLoggedIn">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-dark-900">
+            <div class="w-full max-w-md glass p-10 rounded-[3rem] text-center shadow-2xl">
+                <div class="w-16 h-16 yoga-gradient rounded-2xl flex items-center justify-center font-bold text-2xl mx-auto mb-8 shadow-xl">N</div>
+                <h1 class="text-3xl font-display font-bold mb-2">Admin Login</h1>
+                <p class="text-gray-400 text-sm mb-10">Masukkan kata sandi admin Natha Yoga</p>
+                
+                <form @submit.prevent="login()" class="space-y-6">
+                    <input type="password" x-model="password" placeholder="••••••••" class="w-full bg-dark-800 border border-gray-700 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-yoga-500 transition-all outline-none text-center text-lg tracking-widest">
+                    <button type="submit" class="w-full yoga-gradient py-5 rounded-2xl font-bold text-white shadow-xl active:scale-95 transition-all">Masuk Dashboard</button>
+                </form>
+            </div>
+        </div>
+    </template>
+
+    <!-- Main Dashboard -->
+    <template x-if="isLoggedIn">
+        <div class="flex flex-col min-h-screen">
+            
+            <!-- Sidebar / Nav -->
+            <nav class="glass sticky top-0 z-40 p-6 flex justify-between items-center border-b border-white/5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 yoga-gradient rounded-xl flex items-center justify-center font-bold text-xl shadow-lg">N</div>
+                    <div>
+                        <h2 class="font-display font-bold text-lg leading-none">Management</h2>
+                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Natha Yoga Studio</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button @click="logout()" class="text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-red-400 transition-all">Logout</button>
+                </div>
+            </nav>
+
+            <!-- Content Area -->
+            <main class="p-6 max-w-7xl mx-auto w-full space-y-8">
+                
+                <!-- Stats Cards -->
+                <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass p-6 rounded-[2rem]">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Booking</p>
+                        <h3 class="text-3xl font-display font-bold text-white" x-text="stats.total_bookings">0</h3>
+                    </div>
+                    <div class="glass p-6 rounded-[2rem]">
+                        <p class="text-[10px] font-bold text-green-500 uppercase tracking-widest mb-1">Paid Bookings</p>
+                        <h3 class="text-3xl font-display font-bold text-white" x-text="stats.total_paid">0</h3>
+                    </div>
+                    <div class="glass p-6 rounded-[2rem]">
+                        <p class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest mb-1">Pending Payment</p>
+                        <h3 class="text-3xl font-display font-bold text-white" x-text="stats.total_pending">0</h3>
+                    </div>
+                    <div class="glass p-6 rounded-[2rem]">
+                        <p class="text-[10px] font-bold text-yoga-400 uppercase tracking-widest mb-1">Total Revenue</p>
+                        <h3 class="text-3xl font-display font-bold text-white" x-text="formatCurrency(stats.revenue_est)">Rp 0</h3>
+                    </div>
+                </section>
+
+                <!-- Filters & Controls -->
+                <section class="flex flex-col md:flex-row gap-4 justify-between items-center">
+                    <div class="flex gap-4 w-full md:w-auto overflow-x-auto pb-2 custom-scrollbar">
+                        <button @click="filter = 'all'" :class="filter === 'all' ? 'bg-yoga-500 text-white' : 'glass text-gray-400'" class="px-6 py-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap">Semua</button>
+                        <button @click="filter = 'pending'" :class="filter === 'pending' ? 'bg-yellow-500 text-white' : 'glass text-gray-400'" class="px-6 py-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap">Pending</button>
+                        <button @click="filter = 'paid'" :class="filter === 'paid' ? 'bg-green-500 text-white' : 'glass text-gray-400'" class="px-6 py-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap">Lunas</button>
+                    </div>
+                    <div class="relative w-full md:w-64">
+                        <input type="text" x-model="search" placeholder="Cari nama / ID..." class="w-full bg-dark-800 border border-gray-700 rounded-xl px-6 py-3 text-sm focus:ring-2 focus:ring-yoga-500 outline-none transition-all">
+                    </div>
+                </section>
+
+                <!-- Booking Table -->
+                <section class="glass rounded-[2.5rem] overflow-hidden shadow-2xl">
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white/5 border-b border-white/5 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
+                                    <th class="px-8 py-6">Peserta</th>
+                                    <th class="px-8 py-6">Kelas</th>
+                                    <th class="px-8 py-6 text-center">Payment</th>
+                                    <th class="px-8 py-6 text-center">Status</th>
+                                    <th class="px-8 py-6 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                <template x-for="b in filteredBookings" :key="b.id">
+                                    <tr class="hover:bg-white/5 transition-all group">
+                                        <td class="px-8 py-6">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-10 h-10 rounded-xl bg-yoga-500/10 flex items-center justify-center font-bold text-yoga-500" x-text="b.name[0]"></div>
+                                                <div>
+                                                    <p class="font-bold text-sm" x-text="b.name"></p>
+                                                    <p class="text-[10px] text-gray-500" x-text="b.id"></p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-6">
+                                            <p class="font-bold text-xs" x-text="b.class_title"></p>
+                                            <p class="text-[10px] text-gray-500" x-text="`${b.class_date} • ${b.class_time}`"></p>
+                                        </td>
+                                        <td class="px-8 py-6 text-center">
+                                            <span :class="getPaymentClass(b.payment_status)" class="text-[9px] font-bold uppercase px-3 py-1 rounded-full border" x-text="b.payment_status"></span>
+                                        </td>
+                                        <td class="px-8 py-6 text-center">
+                                            <span :class="b.status === 'checked_in' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-gray-500/10 text-gray-500 border-gray-500/20'" class="text-[9px] font-bold uppercase px-3 py-1 rounded-full border" x-text="b.status"></span>
+                                        </td>
+                                        <td class="px-8 py-6 text-right">
+                                            <div class="flex justify-end gap-2">
+                                                <button @click="openActionMenu(b)" class="bg-dark-700 hover:bg-yoga-500 px-4 py-2 rounded-lg text-[10px] font-bold transition-all">Actions</button>
+                                                <a :href="`https://wa.me/${b.phone.replace(/[^0-9]/g, '')}`" target="_blank" class="bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white px-4 py-2 rounded-lg text-[10px] font-bold transition-all">Chat</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div x-show="filteredBookings.length === 0" class="py-20 text-center text-gray-600">
+                        <p class="text-4xl mb-4">🧘‍♂️</p>
+                        <p class="text-sm italic">Tidak ada data booking yang ditemukan.</p>
+                    </div>
+                </section>
+
+                <!-- Refresh Indicator -->
+                <div class="text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                    Terakhir diperbarui: <span x-text="lastRefresh"></span>
+                </div>
+
+            </main>
+        </div>
+    </template>
+
+    <script>
+        function adminApp() {
+            return {
+                isLoggedIn: localStorage.getItem('yoga_admin_auth') === 'true',
+                password: '',
+                apiUrl: "https://script.google.com/macros/s/AKfycbzSWJ0X-TmIniaJWnYOAw2PLbH0lAjGxejuX6RAcM55Wi0UaeK7NCCH__On_BOVf4ZM/exec",
+                bookings: [],
+                stats: { total_bookings: 0, total_paid: 0, total_pending: 0, revenue_est: 0 },
+                search: '',
+                filter: 'all',
+                lastRefresh: '-',
+                refreshInterval: null,
+
+                init() {
+                    if (this.isLoggedIn) {
+                        this.startRefresh();
+                    }
+                },
+
+                login() {
+                    // Password sederhana: natha2024
+                    if (this.password === 'natha2024') {
+                        this.isLoggedIn = true;
+                        localStorage.setItem('yoga_admin_auth', 'true');
+                        this.startRefresh();
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Login Berhasil', showConfirmButton: false, timer: 1500 });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Gagal', text: 'Kata sandi salah!', background: '#1e293b', color: '#fff' });
+                    }
+                },
+
+                logout() {
+                    this.isLoggedIn = false;
+                    localStorage.removeItem('yoga_admin_auth');
+                    if (this.refreshInterval) clearInterval(this.refreshInterval);
+                },
+
+                async fetchData() {
+                    try {
+                        const [bRes, sRes] = await Promise.all([
+                            fetch(`${this.apiUrl}?action=admin_bookings`).then(r => r.json()),
+                            fetch(`${this.apiUrl}?action=dashboard_stats`).then(r => r.json())
+                        ]);
+
+                        if (bRes.success) this.bookings = bRes.data;
+                        if (sRes.success) this.stats = sRes.data;
+                        this.lastRefresh = new Date().toLocaleTimeString();
+                    } catch (e) {
+                        console.error("Fetch fail", e);
+                    }
+                },
+
+                startRefresh() {
+                    this.fetchData();
+                    this.refreshInterval = setInterval(() => this.fetchData(), 30000); // 30 detik
+                },
+
+                get filteredBookings() {
+                    return this.bookings.filter(b => {
+                        const matchSearch = b.name.toLowerCase().includes(this.search.toLowerCase()) || b.id.toLowerCase().includes(this.search.toLowerCase());
+                        const matchFilter = this.filter === 'all' || b.payment_status === this.filter;
+                        return matchSearch && matchFilter;
+                    });
+                },
+
+                async openActionMenu(b) {
+                    const { value: action } = await Swal.fire({
+                        title: 'Aksi Cepat',
+                        text: `Pilih aksi untuk ${b.name}`,
+                        background: '#1e293b', color: '#fff',
+                        input: 'select',
+                        inputOptions: {
+                            'paid': 'Set Lunas (Paid)',
+                            'confirmed': 'Konfirmasi Booking',
+                            'cancelled': 'Batalkan Booking',
+                            'checked_in': 'Check-in Manual'
+                        },
+                        inputPlaceholder: '-- Pilih Aksi --',
+                        showCancelButton: true,
+                        confirmButtonColor: '#8b5cf6',
+                        customClass: { popup: 'rounded-[2rem]' }
+                    });
+
+                    if (action) {
+                        this.processUpdate(b.id, action);
+                    }
+                },
+
+                async processUpdate(id, action) {
+                    Swal.showLoading();
+                    let type = action === 'checked_in' ? 'status' : 'payment_status';
+                    let value = action;
+                    
+                    try {
+                        const res = await fetch(`${this.apiUrl}?action=update_status&booking_id=${id}&type=${type}&value=${value}`).then(r => r.json());
+                        if (res.success) {
+                            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Berhasil diupdate', showConfirmButton: false, timer: 1500 });
+                            this.fetchData();
+                        }
+                    } catch (e) {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal update status.' });
+                    }
+                },
+
+                getPaymentClass(s) {
+                    switch (s) {
+                        case 'paid': return 'bg-green-500/10 text-green-500 border-green-500/20';
+                        case 'pending': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+                        case 'cancelled': return 'bg-red-500/10 text-red-500 border-red-500/20';
+                        default: return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+                    }
+                },
+
+                formatCurrency(val) {
+                    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

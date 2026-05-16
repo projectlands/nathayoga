@@ -40,10 +40,104 @@ function doGet(e) {
     if (action === "scan_user") {
       return handleScanUser(e.parameter.booking_id);
     }
+    if (action === "admin_bookings") {
+      return handleGetAdminBookings();
+    }
+    if (action === "update_status") {
+      return handleUpdateStatus(e.parameter.booking_id, e.parameter.type, e.parameter.value);
+    }
+    if (action === "dashboard_stats") {
+      return handleGetDashboardStats();
+    }
     return responseJSON({ success: false, message: "Action not found" });
   } catch (err) {
     return responseJSON({ success: false, message: err.toString() });
   }
+}
+
+/**
+ * Get All Bookings for Admin
+ */
+function handleGetAdminBookings() {
+  const data = SHEET_RESERVATIONS.getDataRange().getValues();
+  const headers = data[0];
+  const rows = data.slice(1).reverse(); // Newest first
+  
+  const classes = getSheetData(SHEET_CLASSES);
+  
+  const bookings = rows.map(row => {
+    const cls = classes.find(c => c.id == row[1]);
+    return {
+      id: row[0],
+      class_id: row[1],
+      class_title: cls ? cls.title : "Unknown",
+      class_date: cls ? cls.formatted_date : "",
+      class_time: cls ? cls.formatted_time : "",
+      name: row[2],
+      phone: row[3],
+      status: row[headers.indexOf("status")] || "pending",
+      payment_status: row[headers.indexOf("payment_status")] || "pending",
+      checkin_at: row[headers.indexOf("checkin_at")] || null,
+      created_at: row[headers.indexOf("created_at")]
+    };
+  });
+  
+  return responseJSON({ success: true, data: bookings });
+}
+
+/**
+ * Update Payment or Attendance Status
+ */
+function handleUpdateStatus(bookingId, type, value) {
+  if (!bookingId || !type || !value) return responseJSON({ success: false, message: "Missing params" });
+  
+  const data = SHEET_RESERVATIONS.getDataRange().getValues();
+  const headers = data[0];
+  const rowIndex = data.findIndex(row => row[0] === bookingId);
+  
+  if (rowIndex === -1) return responseJSON({ success: false, message: "Booking not found" });
+  
+  const colIndex = headers.indexOf(type);
+  if (colIndex === -1) {
+    // If column doesn't exist, append it
+    SHEET_RESERVATIONS.getRange(1, headers.length + 1).setValue(type);
+    SHEET_RESERVATIONS.getRange(rowIndex + 1, headers.length + 1).setValue(value);
+  } else {
+    SHEET_RESERVATIONS.getRange(rowIndex + 1, colIndex + 1).setValue(value);
+  }
+  
+  // Record update time
+  const updateIdx = headers.indexOf("updated_at");
+  if (updateIdx !== -1) SHEET_RESERVATIONS.getRange(rowIndex + 1, updateIdx + 1).setValue(new Date());
+  
+  return responseJSON({ success: true, message: `Status ${type} updated to ${value}` });
+}
+
+/**
+ * Get Dashboard Statistics
+ */
+function handleGetDashboardStats() {
+  const data = SHEET_RESERVATIONS.getDataRange().getValues();
+  const headers = data[0];
+  const rows = data.slice(1);
+  
+  const classes = getSheetData(SHEET_CLASSES);
+  
+  const payIdx = headers.indexOf("payment_status");
+  const statIdx = headers.indexOf("status");
+  
+  const stats = {
+    total_bookings: rows.length,
+    total_paid: rows.filter(r => r[payIdx] === "paid").length,
+    total_pending: rows.filter(r => r[payIdx] === "pending" || !r[payIdx]).length,
+    attendance_today: rows.filter(r => r[statIdx] === "checked_in").length,
+    revenue_est: rows.filter(r => r[payIdx] === "paid").reduce((acc, r) => {
+       const cls = classes.find(c => c.id == r[1]);
+       return acc + (cls ? cls.price : 0);
+    }, 0)
+  };
+  
+  return responseJSON({ success: true, data: stats });
 }
 
 /**
