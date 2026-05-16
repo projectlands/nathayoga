@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natha Yoga | Schedule Management</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        yoga: { 500: '#8b5cf6', 600: '#7c3aed', 400: '#a78bfa' },
+                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        body { background-color: #0f172a; color: white; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .yoga-gradient { background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .flatpickr-calendar { background: #1e293b !important; border: 1px solid rgba(255,255,255,0.1) !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important; }
+    </style>
+</head>
+<body class="font-sans min-h-screen bg-dark-900 text-white" x-data="scheduleApp()">
+
+    <div class="flex min-h-screen">
+        
+        <!-- Sidebar Navigation -->
+        <aside :class="sidebarOpen ? 'w-72' : 'w-20'" class="glass border-r border-white/5 fixed lg:static inset-y-0 left-0 z-50 transition-all duration-300 flex flex-col overflow-hidden">
+            <div class="p-6 flex items-center gap-3 border-b border-white/5">
+                <div class="w-10 h-10 yoga-gradient rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-xl shadow-lg">N</div>
+                <div x-show="sidebarOpen" x-transition class="overflow-hidden whitespace-nowrap">
+                    <h2 class="font-display font-bold text-lg leading-none">Natha Admin</h2>
+                    <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Management</span>
+                </div>
+            </div>
+
+            <div class="flex-1 py-6 space-y-2 overflow-y-auto custom-scrollbar px-3">
+                <a href="admin.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">📊</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Dashboard</span>
+                </a>
+                <a href="admin-classes.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">🧘</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Classes</span>
+                </a>
+                <a href="admin-schedules.html" class="flex items-center gap-4 px-4 py-3 rounded-xl bg-yoga-500/10 text-yoga-400 border border-yoga-500/20 group transition-all">
+                    <span class="text-xl">📅</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Schedules</span>
+                </a>
+                <a href="admin-membership.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">💎</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Membership</span>
+                </a>
+                <a href="admin-promo.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">🏷️</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Promo</span>
+                </a>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col min-h-screen overflow-hidden">
+            <!-- Header -->
+            <header class="glass h-20 border-b border-white/5 flex items-center justify-between px-8">
+                <div class="flex items-center gap-4">
+                    <button @click="sidebarOpen = !sidebarOpen" class="p-2 hover:bg-white/5 rounded-lg transition-all">
+                        <span class="text-xl" x-text="sidebarOpen ? '◀' : '▶'"></span>
+                    </button>
+                    <h1 class="text-xl font-display font-bold">Class Schedules</h1>
+                </div>
+                <button @click="openModal()" class="bg-yoga-500 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-yoga-500/20">+ Create Schedule</button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto custom-scrollbar p-8">
+                <!-- Schedule List -->
+                <div class="glass rounded-[3rem] overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white/5 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                                    <th class="px-8 py-6">Date & Class</th>
+                                    <th class="px-8 py-6">Time (WITA)</th>
+                                    <th class="px-8 py-6">Instructor</th>
+                                    <th class="px-8 py-6">Room</th>
+                                    <th class="px-8 py-6 text-center">Slot</th>
+                                    <th class="px-8 py-6 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                <template x-for="s in schedules" :key="s.id">
+                                    <tr class="hover:bg-white/5 transition-all">
+                                        <td class="px-8 py-6">
+                                            <p class="font-bold" x-text="formatDate(s.date)"></p>
+                                            <p class="text-xs text-yoga-400 font-bold uppercase" x-text="s.class_title"></p>
+                                        </td>
+                                        <td class="px-8 py-6 font-mono text-xs" x-text="s.formatted_time"></td>
+                                        <td class="px-8 py-6">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs">🧘</div>
+                                                <span class="text-sm" x-text="s.instructor"></span>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-6 text-sm text-gray-400" x-text="s.room"></td>
+                                        <td class="px-8 py-6 text-center">
+                                            <span class="bg-white/5 px-3 py-1 rounded-full text-xs font-bold" x-text="`${s.booked}/${s.quota}`"></span>
+                                        </td>
+                                        <td class="px-8 py-6 text-right">
+                                            <button @click="confirmDelete(s.id)" class="text-red-400 hover:bg-red-400/10 p-2 rounded-lg transition-all">🗑️</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Create Schedule -->
+    <div x-show="modalOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-dark-900/80 backdrop-blur-sm" x-cloak>
+        <div class="glass w-full max-w-3xl rounded-[3rem] p-10 overflow-hidden relative shadow-2xl" @click.away="modalOpen = false" x-transition>
+            <h2 class="text-3xl font-display font-bold mb-8">Create Schedule</h2>
+            
+            <form @submit.prevent="saveSchedule" class="space-y-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Class Master</label>
+                        <select x-model="formData.class_id" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all" required>
+                            <option value="">Select Class</option>
+                            <template x-for="c in classes" :key="c.id">
+                                <option :value="c.id" x-text="c.title"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Instructor</label>
+                        <input type="text" x-model="formData.instructor" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all" required placeholder="E.g. Santi Devi">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Date</label>
+                        <input type="text" id="date-picker" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Start Time</label>
+                        <input type="text" id="start-time" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">End Time</label>
+                        <input type="text" id="end-time" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Room</label>
+                        <select x-model="formData.room" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all">
+                            <option value="Main Room">Main Room</option>
+                            <option value="Studio B">Studio B</option>
+                            <option value="Private Deck">Private Deck</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Quota</label>
+                        <input type="number" x-model="formData.quota" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Recurring</label>
+                        <select x-model="formData.recurring_type" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all">
+                            <option value="one_time">One Time</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-2" x-show="formData.recurring_type !== 'one_time'">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Recurring Until</label>
+                    <input type="text" id="until-date" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all">
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="button" @click="modalOpen = false" class="flex-1 py-4 rounded-2xl text-gray-500 font-bold hover:bg-white/5 transition-all">Cancel</button>
+                    <button type="submit" class="flex-[2] yoga-gradient py-4 rounded-2xl font-bold text-white shadow-xl shadow-yoga-500/20 active:scale-95 transition-all">
+                        <span x-text="loading ? 'Validating...' : 'Create Schedule'"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function scheduleApp() {
+            return {
+                sidebarOpen: window.innerWidth > 1024,
+                schedules: [],
+                classes: [],
+                loading: false,
+                modalOpen: false,
+                formData: {
+                    class_id: '', instructor: '', date: '', start_time: '', 
+                    end_time: '', room: 'Main Room', quota: 20, 
+                    recurring_type: 'one_time', recurring_until: '', timezone: 'WITA'
+                },
+
+                async init() {
+                    if (localStorage.getItem('yoga_admin_auth') !== 'true') {
+                        window.location.href = 'admin.html';
+                        return;
+                    }
+                    this.initPickers();
+                    await Promise.all([this.fetchSchedules(), this.fetchClasses()]);
+                },
+
+                initPickers() {
+                    flatpickr("#date-picker", { 
+                        dateFormat: "Y-m-d", 
+                        onChange: (dates, str) => this.formData.date = str 
+                    });
+                    flatpickr("#until-date", { 
+                        dateFormat: "Y-m-d", 
+                        onChange: (dates, str) => this.formData.recurring_until = str 
+                    });
+                    flatpickr("#start-time", { 
+                        enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true,
+                        onChange: (dates, str) => this.formData.start_time = str
+                    });
+                    flatpickr("#end-time", { 
+                        enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true,
+                        onChange: (dates, str) => this.formData.end_time = str
+                    });
+                },
+
+                async fetchSchedules() {
+                    const res = await fetch(`${API.URL}?action=admin_schedules`).then(r => r.json());
+                    if (res.success) this.schedules = res.data;
+                },
+
+                async fetchClasses() {
+                    const res = await fetch(`${API.URL}?action=admin_classes`).then(r => r.json());
+                    if (res.success) this.classes = res.data;
+                },
+
+                openModal() {
+                    this.formData = { 
+                        class_id: '', instructor: '', date: '', start_time: '', 
+                        end_time: '', room: 'Main Room', quota: 20, 
+                        recurring_type: 'one_time', recurring_until: '', timezone: 'WITA'
+                    };
+                    this.modalOpen = true;
+                },
+
+                async saveSchedule() {
+                    this.loading = true;
+                    try {
+                        // 1. Validate Conflict First (Client Side check before POST)
+                        const conflictRes = await fetch(`${API.URL}?action=validate_conflict&date=${this.formData.date}&start_time=${this.formData.start_time}&end_time=${this.formData.end_time}&instructor=${this.formData.instructor}&room=${this.formData.room}`).then(r => r.json());
+                        
+                        if (conflictRes.isConflict) {
+                            return Swal.fire({ icon: 'error', title: 'Schedule Conflict!', text: conflictRes.message, background: '#1e293b', color: '#fff' });
+                        }
+
+                        // 2. Save
+                        const res = await fetch(API.URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ action: 'create_schedule', ...this.formData })
+                        }).then(r => r.json());
+
+                        if (res.success) {
+                            Swal.fire({ icon: 'success', title: 'Schedule Created!', text: res.count > 1 ? `${res.count} instances created.` : '', showConfirmButton: false, timer: 2000 });
+                            this.modalOpen = false;
+                            this.fetchSchedules();
+                        } else {
+                            Swal.fire('Error', res.message, 'error');
+                        }
+                    } finally { this.loading = false; }
+                },
+
+                async confirmDelete(id) {
+                    const { isConfirmed } = await Swal.fire({
+                        title: 'Delete Schedule?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        background: '#1e293b',
+                        color: '#fff'
+                    });
+
+                    if (isConfirmed) {
+                        const res = await fetch(API.URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ action: 'delete_schedule', id })
+                        }).then(r => r.json());
+
+                        if (res.success) {
+                            Swal.fire({ icon: 'success', title: 'Deleted!', showConfirmButton: false, timer: 1500 });
+                            this.fetchSchedules();
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Gagal Menghapus', text: res.message, background: '#1e293b', color: '#fff' });
+                        }
+                    }
+                },
+
+                formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }); }
+            }
+        }
+    </script>
+</body>
+</html>
