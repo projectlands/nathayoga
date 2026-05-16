@@ -151,7 +151,8 @@
                                         <td class="px-8 py-6 text-center">
                                             <span class="bg-white/5 px-3 py-1 rounded-full text-xs font-bold" x-text="`${s.booked}/${s.quota}`"></span>
                                         </td>
-                                        <td class="px-8 py-6 text-right">
+                                        <td class="px-8 py-6 text-right space-x-2">
+                                            <button @click="openModal(s)" class="text-blue-400 hover:bg-blue-400/10 p-2 rounded-lg transition-all">✏️</button>
                                             <button @click="confirmDelete(s.id)" class="text-red-400 hover:bg-red-400/10 p-2 rounded-lg transition-all">🗑️</button>
                                         </td>
                                     </tr>

@@ -261,6 +261,35 @@ function handleGetAdminSchedules() {
   return responseJSON({ success: true, data: result.reverse() });
 }
 
+function handleUpdateSchedule(data) {
+  const rows = SHEET_SCHEDULES.getDataRange().getValues();
+  const headers = rows[0];
+  const idx = rows.findIndex(r => r[0] === data.id);
+  
+  if (idx === -1) return responseJSON({ success: false, message: "Schedule not found" });
+  
+  // Update Map
+  const updateMap = {
+    instructor: headers.indexOf("instructor"),
+    date: headers.indexOf("date"),
+    start_time: headers.indexOf("start_time"),
+    end_time: headers.indexOf("end_time"),
+    room: headers.indexOf("room"),
+    quota: headers.indexOf("quota"),
+    status: headers.indexOf("status")
+  };
+
+  for (let key in updateMap) {
+    if (data[key] !== undefined && updateMap[key] !== -1) {
+      let value = data[key];
+      if (key === "date") value = new Date(value);
+      SHEET_SCHEDULES.getRange(idx + 1, updateMap[key] + 1).setValue(value);
+    }
+  }
+  
+  return responseJSON({ success: true, message: "Schedule updated" });
+}
+
 function handleDeleteSchedule(id) {
   const rows = SHEET_SCHEDULES.getDataRange().getValues();
   const idx = rows.findIndex(r => r[0] === id);
