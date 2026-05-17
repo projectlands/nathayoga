@@ -134,7 +134,8 @@ function getMyBookings(phone) {
       ...r,
       class_title: cls ? cls.title : "Unknown",
       class_date: sch ? formatIndonesianDate(sch.date) : (cls ? formatIndonesianDate(r.created_at) : ""),
-      class_time: sch ? `${formatTime12(sch.start_time)} - ${formatTime12(sch.end_time)}` : ""
+      class_time: sch ? `${formatTime12(sch.start_time)} - ${formatTime12(sch.end_time)}` : "",
+      price: cls ? parsePrice(cls.price) : 0
     };
   });
   return responseJSON({ success: true, data: detailed });
