@@ -208,10 +208,15 @@
                 
                 <div id="qrcode-container" class="bg-white p-6 rounded-[2rem] shadow-2xl mb-8"></div>
                 
-                <div class="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-yoga-500">
+                <div class="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-yoga-500 mb-6">
                     <span class="animate-pulse">● LIVE</span>
                     <span class="text-gray-500" x-text="`Token: ${token}`"></span>
                 </div>
+
+                <button @click="downloadQR()" class="bg-yoga-500 hover:bg-yoga-600 text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-glow text-sm flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download QR Code
+                </button>
                 
                 <!-- URL Display for Manual Access -->
                 <p class="mt-8 text-[10px] text-gray-600 bg-black/20 px-4 py-2 rounded-lg cursor-pointer hover:text-yoga-400 break-all" @click="copyLink()" x-text="checkinUrl"></p>
@@ -535,6 +540,19 @@
                 copyLink() {
                     navigator.clipboard.writeText(this.checkinUrl);
                     Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'Link copied!', showConfirmButton: false, timer: 1500 });
+                },
+
+                downloadQR() {
+                    const img = document.querySelector("#qrcode-container img");
+                    if (!img || !img.src) {
+                        return Swal.fire({ toast: true, position: 'top', icon: 'error', title: 'QR Code belum siap!', showConfirmButton: false, timer: 2000 });
+                    }
+                    const a = document.createElement("a");
+                    a.href = img.src;
+                    a.download = `NathaYoga_QR_${this.selectedClassTitle.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
                 },
 
                 formatTime(iso) {
