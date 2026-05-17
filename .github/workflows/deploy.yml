@@ -1,0 +1,39 @@
+name: Deploy Multi-Branch to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - demo # Memantau kedua branch ini
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-main:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Main
+        uses: actions/checkout@v4
+
+      - name: Deploy Main Site
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: . # Mengambil seluruh isi root folder di branch main
+          branch: gh-pages # Hasilnya dikirim ke branch khusus gh-pages
+          target-folder: . # Ditaruh di halaman utama website
+
+  deploy-demo:
+    if: github.ref == 'refs/heads/demo'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Demo
+        uses: actions/checkout@v4
+
+      - name: Deploy Demo Site
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: . # Mengambil seluruh isi root folder di branch demo
+          branch: gh-pages # Hasilnya dikirim ke branch khusus gh-pages
+          target-folder: demo # Otomatis dimasukkan ke sub-folder bernama 'demo'
