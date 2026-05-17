@@ -734,7 +734,26 @@
                     this.loading = true;
                     try {
                         const res = await APP_API.fetch('schedules');
-                        if (res.success) this.classes = res.data;
+                        if (res.success) {
+                            const now = new Date();
+                            this.classes = res.data.filter(sch => {
+                                const schDate = new Date(sch.date);
+                                if (sch.end_time) {
+                                    const timeStr = sch.end_time.toString();
+                                    if (timeStr.includes('T')) {
+                                        const parsedTime = new Date(timeStr);
+                                        if (!isNaN(parsedTime)) schDate.setHours(parsedTime.getHours(), parsedTime.getMinutes(), 0, 0);
+                                    } else {
+                                        const timeParts = timeStr.split(':');
+                                        if (timeParts.length >= 2) schDate.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), 0, 0);
+                                    }
+                                } else {
+                                    // Jika tidak ada end_time, set anggapan selesai jam 23:59 hari itu
+                                    schDate.setHours(23, 59, 59, 999);
+                                }
+                                return schDate > now;
+                            });
+                        }
                     } catch (e) {
                         this.isOnline = false;
                     } finally { this.loading = false; }
