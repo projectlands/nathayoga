@@ -848,7 +848,18 @@
                                 // Scanned!
                                 this.scannerInstance.stop().then(() => {
                                     this.scanningQR = false;
-                                    this.processSelfCheckin(decodedText);
+                                    
+                                    // Ekstrak token jika QR berisi URL (Link)
+                                    let finalToken = decodedText;
+                                    if (decodedText.includes('token=')) {
+                                        try {
+                                            // Memecah parameter jika teksnya berupa URL
+                                            const params = new URLSearchParams(decodedText.split('?')[1]);
+                                            if (params.has('token')) finalToken = params.get('token');
+                                        } catch(e) {}
+                                    }
+                                    
+                                    this.processSelfCheckin(finalToken);
                                 }).catch(err => {
                                     console.error(err);
                                     this.scanningQR = false;
