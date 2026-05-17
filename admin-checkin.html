@@ -547,12 +547,22 @@
                 },
 
                 downloadQR() {
+                    let imgData = null;
+                    const canvas = document.querySelector("#qrcode-container canvas");
                     const img = document.querySelector("#qrcode-container img");
-                    if (!img || !img.src) {
+
+                    if (canvas && canvas.toDataURL) {
+                        imgData = canvas.toDataURL("image/png");
+                    } else if (img && img.src) {
+                        imgData = img.src;
+                    }
+
+                    if (!imgData) {
                         return Swal.fire({ toast: true, position: 'top', icon: 'error', title: 'QR Code belum siap!', showConfirmButton: false, timer: 2000 });
                     }
+                    
                     const a = document.createElement("a");
-                    a.href = img.src;
+                    a.href = imgData;
                     a.download = `NathaYoga_QR_${this.selectedClassTitle.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
                     document.body.appendChild(a);
                     a.click();
