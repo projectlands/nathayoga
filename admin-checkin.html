@@ -246,7 +246,12 @@
                                 <div class="w-10 h-10 bg-yoga-500/10 rounded-full flex items-center justify-center text-yoga-500 font-bold" x-text="person.name[0]"></div>
                                 <div>
                                     <p class="font-bold text-sm" x-text="person.name"></p>
-                                    <p class="text-[10px] text-gray-500" x-text="formatTime(person.checkin_at)"></p>
+                                    <p class="text-[10px] text-gray-500 flex items-center gap-2 mt-0.5">
+                                        <span x-text="formatTime(person.checkin_at)"></span>
+                                        <template x-if="person.medical_history && person.medical_history.toLowerCase() !== 'tidak ada' && person.medical_history.trim() !== ''">
+                                            <span class="text-[9px] font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full" :title="person.medical_history">⚠️ Medis</span>
+                                        </template>
+                                    </p>
                                 </div>
                             </div>
                             <span class="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-md border border-green-500/20">Checked In</span>

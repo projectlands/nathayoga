@@ -228,7 +228,17 @@
                                         <tr class="hover:bg-white/5 transition-all">
                                             <td class="px-8 py-6">
                                                 <p class="font-bold text-sm" x-text="b.name"></p>
-                                                <p class="text-[10px] text-gray-500" x-text="b.phone"></p>
+                                                <p class="text-[10px] text-gray-500 mb-1 flex items-center gap-1">
+                                                    <span x-text="b.phone"></span>
+                                                    <template x-if="b.consent && b.consent.toLowerCase() === 'yes'">
+                                                        <span title="Setuju Pengingat H-1" class="text-green-500 font-bold ml-1">✓</span>
+                                                    </template>
+                                                </p>
+                                                <template x-if="b.medical_history && b.medical_history.toLowerCase() !== 'tidak ada' && b.medical_history.trim() !== ''">
+                                                    <p class="text-[9px] font-bold text-red-500 bg-red-500/10 dark:bg-red-500/20 px-2 py-1 rounded inline-block mt-1 max-w-[200px] truncate" :title="b.medical_history">
+                                                        ⚠️ <span x-text="b.medical_history"></span>
+                                                    </p>
+                                                </template>
                                             </td>
                                             <td class="px-8 py-6">
                                                 <p class="font-bold text-xs" x-text="b.class_title"></p>
