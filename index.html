@@ -182,11 +182,11 @@
             <section class="px-6 grid grid-cols-2 gap-4 mb-8">
                 <div class="glass p-5 rounded-3xl">
                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Instruktur</p>
-                    <p class="text-xl font-bold">12 Ahli</p>
+                    <p class="text-xl font-bold" x-text="loading ? '...' : totalInstructors + ' Ahli'"></p>
                 </div>
                 <div class="glass p-5 rounded-3xl">
                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Kelas</p>
-                    <p class="text-xl font-bold">24 Sesi</p>
+                    <p class="text-xl font-bold" x-text="loading ? '...' : totalSessions + ' Sesi'"></p>
                 </div>
             </section>
         </div>
@@ -695,6 +695,18 @@
 
                 formatPrice(p) {
                     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(p);
+                },
+
+                get totalInstructors() {
+                    const instructors = this.classes
+                        .filter(s => s.status === 'active' && s.instructor)
+                        .map(s => s.instructor.trim());
+                    const unique = [...new Set(instructors)];
+                    return unique.length || 0;
+                },
+
+                get totalSessions() {
+                    return this.classes.filter(s => s.status === 'active').length || 0;
                 }
             }
         }
