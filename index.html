@@ -278,6 +278,10 @@
                             class="yoga-gradient px-6 rounded-2xl font-bold text-white shadow-lg active:scale-95 transition-all">Cek</button>
                     </div>
                 </div>
+                <div x-show="loading" class="text-center py-20">
+                    <div class="w-16 h-16 border-4 border-yoga-100 dark:border-dark-700 border-t-yoga-500 rounded-full animate-spin mx-auto mb-4"></div>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest animate-pulse">Memuat Tiket...</p>
+                </div>
                 <div x-show="myBookings.length === 0 && !loading" class="text-center py-20">
                     <div class="w-32 h-32 bg-yoga-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <span class="text-5xl">🧘‍♂️</span>
@@ -751,40 +755,19 @@
                                 time: this.selectedClass.formatted_time
                             };
 
-                            const waLink = this.generateWALink(bookingData, finalPrice);
-                            const showQR = this.checkinMode === 'user_qr';
-
-                            await Swal.fire({
+                            Swal.fire({
+                                toast: true,
+                                position: 'top',
                                 icon: 'success',
                                 title: 'Booking Berhasil!',
-                                html: `
-                                    <div class="flex flex-col items-center gap-4 py-4">
-                                        <p class="text-sm text-gray-500">ID: <b class="text-yoga-500">${res.booking_id}</b></p>
-                                        <div class="bg-yoga-500/10 p-4 rounded-xl w-full text-center">
-                                            <p class="text-[10px] uppercase font-bold text-gray-400">Total Pembayaran</p>
-                                            <p class="text-xl font-bold text-white">${this.formatPrice(finalPrice)}</p>
-                                        </div>
-                                        ${showQR ? '<div id="qrcode" class="bg-white p-3 rounded-2xl shadow-inner"></div>' : '<div class="w-20 h-20 bg-yoga-500/10 rounded-full flex items-center justify-center text-3xl">🧘</div>'}
-                                        <p class="text-[10px] text-gray-400 uppercase tracking-widest mt-2">${showQR ? 'Tunjukkan QR saat datang' : 'Mengarahkan ke WhatsApp...'}</p>
-                                        
-                                        <div class="flex flex-col w-full gap-2 mt-4">
-                                            <a href="${waLink}" target="_blank" class="bg-green-500 text-white py-3 rounded-xl font-bold text-sm text-center shadow-lg hover:bg-green-600 transition-all">Konfirmasi via WhatsApp</a>
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <button onclick="window.dispatchEvent(new CustomEvent('nav', {detail: 'home'}))" class="bg-gray-100 dark:bg-dark-700 py-3 rounded-xl text-xs font-bold transition-all">Home</button>
-                                                <button onclick="window.dispatchEvent(new CustomEvent('nav', {detail: 'my-bookings'}))" class="bg-gray-100 dark:bg-dark-700 py-3 rounded-xl text-xs font-bold transition-all">My Booking</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `,
-                                background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#fff',
-                                color: document.documentElement.classList.contains('dark') ? '#fff' : '#0f172a',
+                                text: 'Mengambil riwayat tiket Anda...',
                                 showConfirmButton: false,
-                                timer: 10000,
-                                timerProgressBar: true,
-                                didOpen: () => {
-                                    if (showQR) new QRCode(document.getElementById("qrcode"), { text: res.booking_id, width: 120, height: 120, colorDark: "#0f172a" });
-                                }
+                                timer: 2000
                             });
+
+                            this.view = 'my-bookings';
+                            this.searchPhone = this.formData.phone;
+                            this.checkMyBookings();
 
                             await this.loadClasses();
                         } else {
