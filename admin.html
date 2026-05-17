@@ -38,6 +38,19 @@
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        
+        /* Custom SweetAlert2 select input styling to prevent invisible text */
+        .swal2-select {
+            color: #ffffff !important;
+            background-color: #1e293b !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 0.75rem !important;
+            padding: 0.75rem 1rem !important;
+        }
+        .swal2-select option {
+            color: #ffffff !important;
+            background-color: #1e293b !important;
+        }
     </style>
 </head>
 <body class="font-sans min-h-screen bg-dark-900 text-white" x-data="adminApp()">
@@ -297,9 +310,46 @@
                 },
 
                 async processUpdate(id, action) {
-                    let type = action === 'checked_in' ? 'status' : 'payment_status';
-                    const res = await fetch(`${API.URL}?action=update_status&booking_id=${id}&type=${type}&value=${action}`).then(r => r.json());
-                    if (res.success) this.fetchData();
+                    Swal.fire({
+                        title: 'Memproses...',
+                        text: 'Memperbarui status booking',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); },
+                        background: '#1e293b', color: '#fff'
+                    });
+
+                    try {
+                        let type = action === 'checked_in' ? 'status' : 'payment_status';
+                        const res = await fetch(`${API.URL}?action=update_status&booking_id=${id}&type=${type}&value=${action}`).then(r => r.json());
+                        
+                        if (res.success) {
+                            await this.fetchData();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: 'Status booking telah diperbarui.',
+                                background: '#1e293b', color: '#fff',
+                                confirmButtonColor: '#8b5cf6'
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: res.message || 'Gagal memperbarui status.',
+                                background: '#1e293b', color: '#fff',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: 'Terjadi kesalahan koneksi.',
+                            background: '#1e293b', color: '#fff',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
                 },
 
                 getPaymentClass(s) {
