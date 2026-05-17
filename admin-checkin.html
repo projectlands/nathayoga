@@ -116,7 +116,7 @@
                     <button @click="toggleTheme()" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:scale-110 transition-all mr-2">
                         <span class="text-lg" x-text="isDark ? '☀️' : '🌙'"></span>
                     </button>
-                    <a href="index.html" class="text-xs bg-white/5 px-4 py-2 border border-white/10 rounded-xl font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-all flex items-center justify-center">Back to App</a>
+                    <a :href="backUrl" x-text="backText" class="text-xs bg-white/5 px-4 py-2 border border-white/10 rounded-xl font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-all flex items-center justify-center"></a>
                 </div>
             </header>
 
@@ -386,6 +386,10 @@
                 // Searchable dropdown properties
                 searchQuery: '',
                 dropdownSearchOpen: false,
+                
+                // Smart navigation back button
+                backUrl: 'admin.html',
+                backText: 'Back to Dashboard',
 
                 get filteredClasses() {
                     if (!this.searchQuery) return this.classes;
@@ -455,6 +459,8 @@
                             const cls = this.classes.find(c => c.id == autoClassId);
                             if (cls) {
                                 this.selectClass(cls);
+                                this.backUrl = 'admin-schedules.html';
+                                this.backText = 'Kembali ke Jadwal';
                                 // Optional: remove query string without refreshing to keep URL clean
                                 window.history.replaceState({}, document.title, window.location.pathname);
                             }
