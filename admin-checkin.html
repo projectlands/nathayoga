@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natha Yoga | Admin Dynamic Check-in</title>
+
+    <!-- PWA Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <link rel="apple-touch-icon" href="logo.jpg">
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <meta property="og:image" content="logo.jpg">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    
+        <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        yoga: {
+                            50: '#FDFBFD',
+                            100: '#F9F3F9',
+                            200: '#F4E7F4',
+                            300: '#E9D1EA',
+                            400: '#DFBBDF',
+                            500: '#D8B4E2',
+                            600: '#C08BCF',
+                            700: '#A765B9',
+                            800: '#7B6291',
+                            900: '#2D3142'
+                        },
+                        dark: {
+                            900: '#121016',
+                            800: '#1a1822',
+                            700: '#252230'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.06)',
+                        'glow': '0 10px 20px -5px rgba(216, 180, 226, 0.4)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        body { background-color: #FDFBFD; color: #2D3142; }
+        .glass { background: #FFFFFF; border: none; box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05); }
+        .dark .glass { background: rgba(30, 28, 38, 0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5); }
+        .yoga-gradient { background: linear-gradient(135deg, #FFB6C1 0%, #D8B4E2 100%); color: white; }
+    </style>
+</head>
+<body class="bg-yoga-50 dark:bg-dark-900 text-yoga-900 dark:text-gray-100 font-sans min-h-screen transition-colors duration-500" x-data="adminCheckin()">
+
+    <div class="flex min-h-screen">
+        
+        <!-- Sidebar Navigation -->
+        <aside :class="sidebarOpen ? 'lg:w-72' : 'lg:w-20'" class="glass border-r border-white/5 hidden lg:flex fixed lg:static inset-y-0 left-0 z-50 transition-all duration-300 flex-col overflow-hidden">
+            <div class="p-6 flex items-center gap-3 border-b border-white/5">
+                <div class="w-10 h-10 yoga-gradient rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-xl shadow-lg">N</div>
+                <div x-show="sidebarOpen" x-transition class="overflow-hidden whitespace-nowrap">
+                    <h2 class="font-display font-bold text-lg leading-none">Natha Admin</h2>
+                    <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Management</span>
+                </div>
+            </div>
+
+            <div class="flex-1 py-6 space-y-2 overflow-y-auto custom-scrollbar px-3">
+                <a href="admin.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">📊</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Dashboard</span>
+                </a>
+                <a href="admin-classes.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">🧘</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Classes</span>
+                </a>
+                <a href="admin-schedules.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">📅</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Schedules</span>
+                </a>
+                <a href="admin-membership.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">💎</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Membership</span>
+                </a>
+                <a href="admin-promo.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">🏷️</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Promo</span>
+                </a>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col min-h-screen overflow-hidden">
+            <!-- Header -->
+            <header class="glass h-20 border-b border-white/5 flex items-center justify-between px-8">
+                <div class="flex items-center gap-4">
+                    <button @click="sidebarOpen = !sidebarOpen" class="hidden lg:block p-2 hover:bg-white/5 rounded-lg transition-all">
+                        <span class="text-xl" x-text="sidebarOpen ? '◀' : '▶'"></span>
+                    </button>
+                    <h1 class="text-xl font-display font-bold">Check-in Page</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button @click="toggleTheme()" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:scale-110 transition-all mr-2">
+                        <span class="text-lg" x-text="isDark ? '☀️' : '🌙'"></span>
+                    </button>
+                    <a :href="backUrl" x-text="backText" class="text-xs bg-white/5 px-4 py-2 border border-white/10 rounded-xl font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-all flex items-center justify-center"></a>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8 max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Left: Class Selection & QR -->
+        <section class="space-y-6">
+            <div class="glass p-8 rounded-[2.5rem]">
+                <h2 class="text-2xl font-display font-bold mb-6 text-yoga-400">Pilih Sesi Kelas</h2>
+                <div class="space-y-4">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Nama Sesi Kelas</label>
+                    
+                    <!-- Searchable Dropdown Sessions -->
+                    <div class="relative" @click.away="dropdownSearchOpen = false">
+                        <div class="relative flex items-center">
+                            <input type="text" 
+                                   x-model="searchQuery" 
+                                   @focus="dropdownSearchOpen = true"
+                                   placeholder="Cari atau pilih sesi kelas..." 
+                                   class="w-full bg-white/5 dark:bg-dark-900 border border-white/10 dark:border-gray-700 rounded-2xl pl-6 pr-12 py-4 focus:ring-2 focus:ring-yoga-500 transition-all outline-none text-sm cursor-pointer"
+                                   @input="selectedClassId = ''; token = ''; stopAttendanceSync(); dropdownSearchOpen = true">
+                            
+                            <!-- Dropdown Controls -->
+                            <div class="absolute right-4 flex items-center gap-2">
+                                <button x-show="selectedClassId" @click="clearSelection()" type="button" class="text-gray-500 hover:text-white text-xs p-1">✕</button>
+                                <span class="text-gray-500 text-xs transition-transform duration-200" :class="dropdownSearchOpen ? 'rotate-180' : ''">▼</span>
+                            </div>
+                        </div>
+
+                        <!-- Dropdown Options Panel -->
+                        <div x-show="dropdownSearchOpen" 
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-1"
+                             x-transition:enter-end="opacity-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 translate-y-0"
+                             x-transition:leave-end="opacity-0 translate-y-1"
+                             class="absolute z-[100] mt-2 w-full glass border border-white/10 rounded-2xl shadow-2xl max-h-64 overflow-y-auto custom-scrollbar" 
+                             x-cloak>
+                            
+                            <div class="p-2 space-y-1">
+                                <!-- Loading State -->
+                                <template x-if="loading">
+                                    <div class="px-4 py-3 text-xs text-gray-500 flex items-center gap-2">
+                                        <span class="animate-spin border-2 border-yoga-500 border-t-transparent rounded-full h-3.5 w-3.5"></span>
+                                        <span>Memuat data sesi kelas...</span>
+                                    </div>
+                                </template>
+                                
+                                <!-- No Result -->
+                                <template x-if="!loading && filteredClasses.length === 0">
+                                    <div class="px-4 py-3 text-xs text-gray-500 text-center">Tidak ada sesi kelas yang cocok</div>
+                                </template>
+
+                                <!-- Classes List -->
+                                <template x-for="cls in filteredClasses" :key="cls.id">
+                                    <button @click="selectClass(cls)" 
+                                            type="button"
+                                            class="w-full text-left px-4 py-3 rounded-xl hover:bg-yoga-500/10 hover:text-yoga-400 text-xs font-semibold transition-all flex justify-between items-center"
+                                            :class="selectedClassId === cls.id ? 'bg-yoga-500/20 text-yoga-300' : 'text-gray-300'">
+                                        <div>
+                                            <p class="font-bold text-white text-sm" x-text="cls.title"></p>
+                                            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-0.5" x-text="cls.instructor ? '🧘 ' + cls.instructor : ''"></p>
+                                        </div>
+                                        <span class="text-[10px] bg-white/5 px-2.5 py-1 rounded-full text-yoga-400 font-mono font-bold" x-text="cls.formatted_time"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button x-show="checkinMode === 'class_qr'" @click="generateToken(!!token)" :disabled="!selectedClassId || loading" class="w-full yoga-gradient py-5 rounded-[1.5rem] font-bold text-white shadow-xl shadow-yoga-500/20 active:scale-95 transition-all mt-4 flex items-center justify-center gap-3">
+                        <span x-show="loading" class="animate-spin border-2 border-white border-t-transparent rounded-full h-5 w-5"></span>
+                        <span x-text="token ? 'Regenerate QR' : 'Generate QR Check-in'"></span>
+                    </button>
+
+                    <!-- User QR Mode Info -->
+                    <div x-show="checkinMode === 'user_qr'" class="mt-4 p-6 bg-yoga-500/10 border border-yoga-500/20 rounded-2xl">
+                        <p class="text-sm text-yoga-300 mb-4">Sistem saat ini dalam mode <b>User QR</b>. Admin harus memindai QR peserta.</p>
+                        <a href="scanner.html" class="block w-full bg-yoga-500 py-4 rounded-xl font-bold text-center active:scale-95 transition-all">Buka Scanner Admin</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QR Display -->
+            <div x-show="checkinMode === 'class_qr' && token" x-transition class="glass p-10 rounded-[3rem] text-center flex flex-col items-center">
+                <h3 class="text-xl font-bold mb-2">Scan untuk Check-in</h3>
+                <p class="text-gray-400 text-sm mb-8" x-text="`Sesi: ${selectedClassTitle}`"></p>
+                
+                <div id="qrcode-container" class="bg-white p-6 rounded-[2rem] shadow-2xl mb-8"></div>
+                
+                <div class="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-yoga-500 mb-6">
+                    <span class="animate-pulse">● LIVE</span>
+                    <span class="text-gray-500" x-text="`Token: ${token}`"></span>
+                </div>
+
+                <button @click="downloadQR()" class="bg-yoga-500 hover:bg-yoga-600 text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-glow text-sm flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download QR Code
+                </button>
+                
+                <!-- URL Display for Manual Access -->
+                <p class="mt-8 text-[10px] text-gray-600 bg-black/20 px-4 py-2 rounded-lg cursor-pointer hover:text-yoga-400 break-all" @click="copyLink()" x-text="checkinUrl"></p>
+            </div>
+        </section>
+
+        <!-- Right: Realtime Attendance -->
+        <section x-show="selectedClassId" class="space-y-6" x-transition>
+            <div class="glass p-8 rounded-[2.5rem] h-full flex flex-col">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h2 class="text-2xl font-display font-bold">Kehadiran Peserta</h2>
+                        <p class="text-gray-400 text-sm mt-1">Status kehadiran langsung (Refresh 5s)</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-4xl font-bold text-yoga-400" x-text="attendance.total_present">0</span>
+                        <span class="text-gray-600 font-bold">/</span>
+                        <span class="text-xl text-gray-500 font-bold" x-text="selectedClassQuota">0</span>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-dark-900 h-3 rounded-full overflow-hidden mb-8 border border-gray-800">
+                    <div class="h-full yoga-gradient transition-all duration-1000" :style="`width: ${(attendance.total_present/selectedClassQuota)*100}%`"></div>
+                </div>
+
+                <!-- Attendance List -->
+                <div class="flex-1 overflow-y-auto space-y-3 max-h-[500px] pr-2 custom-scrollbar">
+                    <template x-for="person in attendance.list" :key="person.id">
+                        <div class="bg-dark-900/50 p-4 rounded-2xl flex justify-between items-center border border-gray-800 animate-slide-in">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-yoga-500/10 rounded-full flex items-center justify-center text-yoga-500 font-bold" x-text="person.name[0]"></div>
+                                <div>
+                                    <p class="font-bold text-sm" x-text="person.name"></p>
+                                    <p class="text-[10px] text-gray-500 flex items-center gap-2 mt-0.5">
+                                        <span x-text="formatTime(person.checkin_at)"></span>
+                                        <template x-if="person.medical_history && person.medical_history.toLowerCase() !== 'tidak ada' && person.medical_history.trim() !== ''">
+                                            <span class="text-[9px] font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full" :title="person.medical_history">⚠️ Medis</span>
+                                        </template>
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-md border border-green-500/20">Checked In</span>
+                        </div>
+                    </template>
+                    <div x-show="attendance.list.length === 0" class="text-center py-20 text-gray-600">
+                        <p class="text-4xl mb-4">🧘‍♂️</p>
+                        <p class="text-sm italic">Belum ada peserta yang hadir...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+                        <!-- Mobile Bottom Navigation (Mobile Only) -->
+            <div class="fixed bottom-0 inset-x-0 z-40 px-6 pb-6 lg:hidden pointer-events-none">
+                <div class="max-w-md mx-auto h-[4.5rem] bg-white dark:bg-dark-800 rounded-full flex items-center justify-around px-4 pointer-events-auto shadow-soft border border-gray-50 dark:border-dark-700">
+                    <a href="admin.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors yoga-gradient shadow-glow text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Dash</span>
+                    </a>
+                    <a href="admin-classes.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin-classes.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Classes</span>
+                    </a>
+                    <a href="admin-schedules.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin-schedules.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Jadwal</span>
+                    </a>
+                    <a href="admin-membership.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin-membership.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Member</span>
+                    </a>
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Menu</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Drawer Menu Overlay -->
+            <div x-show="mobileMenuOpen" x-cloak 
+                 @click="mobileMenuOpen = false"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 z-50 bg-black/20 backdrop-blur-md dark:bg-black/60 backdrop-blur-sm lg:hidden pointer-events-auto">
+                
+                <!-- Drawer Container -->
+                <div @click.stop
+                     x-transition:enter="transition ease-out duration-300 transform"
+                     x-transition:enter-start="translate-y-full"
+                     x-transition:enter-end="translate-y-0"
+                     x-transition:leave="transition ease-in duration-200 transform"
+                     x-transition:leave-start="translate-y-0"
+                     x-transition:leave-end="translate-y-full"
+                     class="absolute bottom-0 inset-x-0 glass rounded-t-[3rem] p-8 space-y-6 max-h-[85vh] overflow-y-auto pointer-events-auto">
+                    
+                    <div class="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-white/5">
+                        <h3 class="font-display font-bold text-lg text-gray-900 dark:text-white">Natha Admin Menu</h3>
+                        <button @click="mobileMenuOpen = false" class="w-8 h-8 rounded-full bg-white shadow-sm dark:bg-white/5 dark:shadow-none flex items-center justify-center text-sm font-bold">✕</button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <a href="admin-promo.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
+                            <span class="text-2xl mb-2">🏷️</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white">Promos & Vouchers</span>
+                        </a>
+                        <a href="scanner.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
+                            <span class="text-2xl mb-2">🔍</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white">QR Scanner</span>
+                        </a>
+                        <a href="admin-checkin.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
+                            <span class="text-2xl mb-2">✅</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white">Check-in Page</span>
+                        </a>
+                        <button @click="toggleTheme(); mobileMenuOpen = false" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
+                            <span class="text-2xl mb-2" x-text="isDark ? '☀️' : '🌙'">🌙</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white" x-text="isDark ? 'Light Mode' : 'Dark Mode'">Dark Mode</span>
+                        </button>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-200 dark:border-white/5">
+                        <button @click="logout()" class="w-full py-4 rounded-2xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-sm transition-all flex items-center justify-center gap-3">
+                            <span>🚪</span>
+                            <span>Sign Out / Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        function adminCheckin() {
+            return {
+                sidebarOpen: window.innerWidth > 1024,
+                apiUrl: API.URL,
+                classes: [],
+                selectedClassId: '',
+                selectedClassTitle: '',
+                selectedClassQuota: 0,
+                token: '',
+                checkinUrl: '',
+                loading: false,
+                attendance: { total_present: 0, list: [] },
+                syncInterval: null,
+                checkinMode: 'class_qr',
+                isDark: false,
+                mobileMenuOpen: false,
+
+                // Searchable dropdown properties
+                searchQuery: '',
+                dropdownSearchOpen: false,
+                
+                // Smart navigation back button
+                backUrl: 'admin.html',
+                backText: 'Back to Dashboard',
+
+                get filteredClasses() {
+                    if (!this.searchQuery) return this.classes;
+                    const query = this.searchQuery.toLowerCase();
+                    return this.classes.filter(c => 
+                        c.title.toLowerCase().includes(query) || 
+                        (c.instructor && c.instructor.toLowerCase().includes(query))
+                    );
+                },
+
+                selectClass(cls) {
+                    this.selectedClassId = cls.id;
+                    this.selectedClassTitle = `${cls.title} (${cls.formatted_time})`;
+                    this.searchQuery = this.selectedClassTitle;
+                    this.dropdownSearchOpen = false;
+                    this.token = ''; // Reset QR code temporarily
+                    this.stopAttendanceSync();
+
+                    if (this.checkinMode === 'class_qr') {
+                        this.generateToken(false);
+                    }
+                },
+
+                clearSelection() {
+                    this.selectedClassId = '';
+                    this.selectedClassTitle = '';
+                    this.searchQuery = '';
+                    this.token = ''; // Reset QR
+                    this.stopAttendanceSync();
+                },
+
+                initTheme() {
+                    this.isDark = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    if (this.isDark) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                },
+
+                toggleTheme() {
+                    this.isDark = !this.isDark;
+                    if (this.isDark) {
+                        document.documentElement.classList.add('dark');
+                        localStorage.theme = 'dark';
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.theme = 'light';
+                    }
+                },
+
+                logout() {
+                    localStorage.removeItem('yoga_admin_auth');
+                    window.location.href = 'admin.html';
+                },
+
+                async init() {
+                    this.initTheme();
+                    this.loading = true;
+                    try {
+                        await Promise.all([this.loadSettings(), this.loadClasses()]);
+                        
+                        // Check if navigated from schedules page
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const autoClassId = urlParams.get('class_id');
+                        if (autoClassId && this.classes.length > 0) {
+                            const cls = this.classes.find(c => c.id == autoClassId);
+                            if (cls) {
+                                this.selectClass(cls);
+                                this.backUrl = 'admin-schedules.html';
+                                this.backText = 'Kembali ke Jadwal';
+                                // Optional: remove query string without refreshing to keep URL clean
+                                window.history.replaceState({}, document.title, window.location.pathname);
+                            }
+                        }
+                    } finally { this.loading = false; }
+                },
+
+                async loadSettings() {
+                    const res = await fetch(`${this.apiUrl}?action=settings`).then(r => r.json());
+                    if (res.success) {
+                        this.checkinMode = res.data.checkin_mode || 'class_qr';
+                    }
+                },
+
+                async loadClasses() {
+                    const res = await fetch(`${this.apiUrl}?action=admin_schedules`).then(r => r.json());
+                    if (res.success) {
+                        // Map schedules directly to dropdown options
+                        this.classes = res.data.map(s => ({
+                            id: s.id,
+                            title: s.class_title,
+                            instructor: s.instructor,
+                            formatted_time: s.formatted_time,
+                            quota: s.quota
+                        }));
+                    }
+                },
+
+                async generateToken(isForce = false) {
+                    if (!this.selectedClassId) return;
+                    this.loading = true;
+                    if (isForce) this.token = ''; // Reset token
+                    
+                    try {
+                        const res = await fetch(`${this.apiUrl}?action=generate_token&class_id=${this.selectedClassId}&force=${isForce}`).then(r => r.json());
+                        
+                        if (res.success) {
+                            this.token = res.data.token;
+                            
+                            // Base URL for GitHub Pages or current host
+                            const baseUrl = window.location.origin + window.location.pathname.replace('admin-checkin.html', 'checkin.html');
+                            this.checkinUrl = `${baseUrl}?token=${this.token}`;
+                            
+                            // Clear and Generate QR
+                            this.$nextTick(() => {
+                                const container = document.getElementById("qrcode-container");
+                                container.innerHTML = "";
+                                new QRCode(container, {
+                                    text: this.checkinUrl,
+                                    width: 250,
+                                    height: 250,
+                                    colorDark: "#0f172a",
+                                    correctLevel: QRCode.CorrectLevel.H
+                                });
+                            });
+
+                            const cls = this.classes.find(c => c.id == this.selectedClassId);
+                            this.selectedClassTitle = cls.title;
+                            this.selectedClassQuota = cls.quota;
+
+                            this.startAttendanceSync();
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal Generate QR',
+                                text: res.message || 'Terjadi kesalahan pada server.',
+                                background: '#1e293b', color: '#fff'
+                            });
+                        }
+                    } catch (err) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Network Error',
+                            text: 'Gagal menghubungi server Apps Script. Pastikan Anda sudah "Deploy" sebagai "Web App" dan izin akses diatur ke "Anyone".',
+                            background: '#1e293b', color: '#fff'
+                        });
+                    } finally { this.loading = false; }
+                },
+
+                async startAttendanceSync() {
+                    this.stopAttendanceSync();
+                    await this.fetchAttendance();
+                    this.syncInterval = setInterval(() => this.fetchAttendance(), 5000);
+                },
+
+                stopAttendanceSync() {
+                    if (this.syncInterval) clearInterval(this.syncInterval);
+                    this.attendance = { total_present: 0, list: [] };
+                },
+
+                async fetchAttendance() {
+                    if (!this.selectedClassId) return;
+                    const res = await fetch(`${this.apiUrl}?action=attendance_list&class_id=${this.selectedClassId}`).then(r => r.json());
+                    if (res.success) {
+                        this.attendance = res.data;
+                    }
+                },
+
+                copyLink() {
+                    navigator.clipboard.writeText(this.checkinUrl);
+                    Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'Link copied!', showConfirmButton: false, timer: 1500 });
+                },
+
+                downloadQR() {
+                    let imgData = null;
+                    const canvas = document.querySelector("#qrcode-container canvas");
+                    const img = document.querySelector("#qrcode-container img");
+
+                    if (canvas && canvas.toDataURL) {
+                        imgData = canvas.toDataURL("image/png");
+                    } else if (img && img.src) {
+                        imgData = img.src;
+                    }
+
+                    if (!imgData) {
+                        return Swal.fire({ toast: true, position: 'top', icon: 'error', title: 'QR Code belum siap!', showConfirmButton: false, timer: 2000 });
+                    }
+                    
+                    const a = document.createElement("a");
+                    a.href = imgData;
+                    a.download = `NathaYoga_QR_${this.selectedClassTitle.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                },
+
+                formatTime(iso) {
+                    return new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .animate-slide-in { animation: slideIn 0.5s ease-out forwards; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    </style>
+</body>
+</html>

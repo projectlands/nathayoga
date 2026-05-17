@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natha Yoga | Class Management</title>
+
+    <!-- PWA Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <link rel="apple-touch-icon" href="logo.jpg">
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <meta property="og:image" content="logo.jpg">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/api.js"></script>
+    
+        <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        yoga: {
+                            50: '#FDFBFD',
+                            100: '#F9F3F9',
+                            200: '#F4E7F4',
+                            300: '#E9D1EA',
+                            400: '#DFBBDF',
+                            500: '#D8B4E2',
+                            600: '#C08BCF',
+                            700: '#A765B9',
+                            800: '#7B6291',
+                            900: '#2D3142'
+                        },
+                        dark: {
+                            900: '#121016',
+                            800: '#1a1822',
+                            700: '#252230'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.06)',
+                        'glow': '0 10px 20px -5px rgba(216, 180, 226, 0.4)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        body { background-color: #FDFBFD; color: #2D3142; }
+        .glass { background: #FFFFFF; border: none; box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05); }
+        .dark .glass { background: rgba(30, 28, 38, 0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5); }
+        .yoga-gradient { background: linear-gradient(135deg, #FFB6C1 0%, #D8B4E2 100%); color: white; }
+    </style>
+</head>
+<body class="bg-yoga-50 dark:bg-dark-900 text-yoga-900 dark:text-gray-100 font-sans min-h-screen transition-colors duration-500" x-data="classApp()">
+
+    <div class="flex min-h-screen">
+        
+        <!-- Sidebar Navigation -->
+        <aside :class="sidebarOpen ? 'lg:w-72' : 'lg:w-20'" class="glass border-r border-white/5 hidden lg:flex fixed lg:static inset-y-0 left-0 z-50 transition-all duration-300 flex-col overflow-hidden">
+            <div class="p-6 flex items-center gap-3 border-b border-white/5">
+                <div class="w-10 h-10 yoga-gradient rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-xl shadow-lg">N</div>
+                <div x-show="sidebarOpen" x-transition class="overflow-hidden whitespace-nowrap">
+                    <h2 class="font-display font-bold text-lg leading-none">Natha Admin</h2>
+                    <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Management</span>
+                </div>
+            </div>
+
+            <div class="flex-1 py-6 space-y-2 overflow-y-auto custom-scrollbar px-3">
+                <a href="admin.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">📊</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Dashboard</span>
+                </a>
+                <a href="admin-classes.html" class="flex items-center gap-4 px-4 py-3 rounded-xl bg-yoga-500/10 text-yoga-400 border border-yoga-500/20 group transition-all">
+                    <span class="text-xl">🧘</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Classes</span>
+                </a>
+                <a href="admin-schedules.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">📅</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Schedules</span>
+                </a>
+                <a href="admin-membership.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">💎</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Membership</span>
+                </a>
+                <a href="admin-promo.html" class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group">
+                    <span class="text-xl">🏷️</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Promo</span>
+                </a>
+            </div>
+
+            <div class="p-6 border-t border-white/5">
+                <button @click="logout()" class="flex items-center gap-4 px-4 py-3 rounded-xl w-full text-red-400 hover:bg-red-400/10 transition-all">
+                    <span class="text-xl">🚪</span>
+                    <span x-show="sidebarOpen" class="text-sm font-bold">Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col min-h-screen overflow-hidden">
+            <!-- Header -->
+            <header class="glass h-20 border-b border-white/5 flex items-center justify-between px-8">
+                <div class="flex items-center gap-4">
+                    <button @click="sidebarOpen = !sidebarOpen" class="hidden lg:block p-2 hover:bg-white/5 rounded-lg transition-all">
+                        <span class="text-xl" x-text="sidebarOpen ? '◀' : '▶'"></span>
+                    </button>
+                    <a href="admin-checkin.html" class="lg:hidden w-10 h-10 glass rounded-full flex items-center justify-center text-sm hover:scale-105 transition-all">✅</a>
+                    <h1 class="text-xl font-display font-bold">Class Master</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button @click="toggleTheme()" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:scale-110 transition-all mr-2">
+                        <span class="text-lg" x-text="isDark ? '☀️' : '🌙'"></span>
+                    </button>
+                    <button @click="openModal()" class="bg-yoga-500 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-yoga-500/20">+ Add Class</button>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto custom-scrollbar p-8 pb-32 lg:pb-8">
+                <!-- Filters & Search -->
+                <div class="flex flex-col md:flex-row gap-4 justify-between mb-6" x-show="!loading && classes.filter(c => c.status !== 'deleted').length > 0" x-cloak>
+                    <div class="flex-1 w-full relative">
+                        <input type="text" x-model="searchQuery" @input="currentPage = 1" placeholder="Search class name or description..." class="w-full bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl px-6 py-3 pl-12 outline-none focus:ring-2 focus:ring-yoga-500 transition-all text-yoga-900 dark:text-white shadow-soft">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <select x-model="filterCategory" @change="currentPage = 1" class="flex-1 md:w-40 bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl px-6 py-3 outline-none focus:ring-2 focus:ring-yoga-500 transition-all text-yoga-900 dark:text-white shadow-soft">
+                            <option value="">All Categories</option>
+                            <option value="Vinyasa">Vinyasa</option>
+                            <option value="Hatha">Hatha</option>
+                            <option value="Ashtanga">Ashtanga</option>
+                            <option value="Yin">Yin</option>
+                            <option value="Meditation">Meditation</option>
+                        </select>
+                        <select x-model="filterDifficulty" @change="currentPage = 1" class="flex-1 md:w-40 bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl px-6 py-3 outline-none focus:ring-2 focus:ring-yoga-500 transition-all text-yoga-900 dark:text-white shadow-soft">
+                            <option value="">All Levels</option>
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                            <option value="All Levels">All Levels</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Class List Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Loading State Grid -->
+                    <div x-show="loading && classes.length === 0" class="col-span-full flex flex-col items-center justify-center py-20">
+                        <div class="relative w-12 h-12 flex items-center justify-center mb-4">
+                            <div class="absolute inset-0 border-4 border-yoga-500/20 rounded-full"></div>
+                            <div class="absolute inset-0 border-4 border-yoga-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                        <p class="text-xs uppercase tracking-widest font-bold text-gray-400 animate-pulse">Memuat data kelas...</p>
+                    </div>
+
+                    <!-- Empty State Grid -->
+                    <div x-show="!loading && filteredClasses.length === 0" class="col-span-full flex flex-col items-center justify-center py-20 text-center text-gray-500 glass rounded-[2rem]">
+                        <span class="text-4xl mb-3">🧘</span>
+                        <p class="text-sm font-semibold text-gray-400">Tidak ada kelas yang sesuai</p>
+                        <p class="text-xs text-gray-500">Ubah filter pencarian atau tambahkan kelas baru</p>
+                    </div>
+
+                    <template x-for="cls in paginatedClasses" :key="cls.id">
+                        <div class="glass rounded-[2rem] overflow-hidden group hover:border-yoga-500/50 transition-all flex flex-col">
+                            <div class="relative h-48 overflow-hidden">
+                                <img :src="cls.thumbnail || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800'" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-500">
+                                <div class="absolute top-4 left-4 flex gap-2">
+                                    <span class="bg-yoga-600 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg" x-text="cls.category"></span>
+                                    <span :class="getDifficultyClass(cls.difficulty)" class="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg" x-text="cls.difficulty"></span>
+                                </div>
+                            </div>
+                            <div class="p-6 flex-1 flex flex-col">
+                                <h3 class="text-xl font-display font-bold mb-2" x-text="cls.title"></h3>
+                                <p class="text-xs text-gray-500 line-clamp-2 mb-4" x-text="cls.description"></p>
+                                <div class="grid grid-cols-2 gap-3 mb-6">
+                                    <div class="bg-white/5 p-3 rounded-2xl text-center border border-white/5">
+                                        <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Duration</p>
+                                        <p class="text-sm font-bold" x-text="cls.duration + ' Min'"></p>
+                                    </div>
+                                    <div class="bg-white/5 p-3 rounded-2xl text-center border border-white/5">
+                                        <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Price</p>
+                                        <p class="text-sm font-bold" x-text="formatCurrency(cls.price)"></p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 mt-auto pt-4 border-t border-white/5">
+                                    <button @click="editClass(cls)" class="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-xl text-xs font-bold transition-all">Edit</button>
+                                    <button @click="confirmDelete(cls.id)" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 p-3 rounded-xl transition-all">
+                                        <span class="text-lg">🗑️</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Load More Button -->
+                <div class="text-center mt-8 pb-10" x-show="hasMore" x-cloak>
+                    <button @click="currentPage++" class="glass px-8 py-3 rounded-full text-xs font-bold text-yoga-500 hover:scale-105 transition-all shadow-soft border border-gray-50 dark:border-white/5">
+                        Load More Classes ↓
+                    </button>
+                </div>
+            </main>
+
+                        <!-- Mobile Bottom Navigation (Mobile Only) -->
+            <div class="fixed bottom-0 inset-x-0 z-40 px-6 pb-6 lg:hidden pointer-events-none">
+                <div class="max-w-md mx-auto h-[4.5rem] bg-white dark:bg-dark-800 rounded-full flex items-center justify-around px-4 pointer-events-auto shadow-soft border border-gray-50 dark:border-dark-700">
+                    <a href="admin.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors yoga-gradient shadow-glow text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Dash</span>
+                    </a>
+                    <a href="admin-classes.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-yoga-500 -translate-y-2" data-id="admin-classes.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Classes</span>
+                    </a>
+                    <a href="admin-schedules.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin-schedules.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Jadwal</span>
+                    </a>
+                    <a href="admin-membership.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin-membership.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Member</span>
+                    </a>
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Menu</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Drawer Menu Overlay -->
+            <div x-show="mobileMenuOpen" x-cloak 
+                 @click="mobileMenuOpen = false"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 z-50 bg-black/20 backdrop-blur-md dark:bg-black/60 backdrop-blur-sm lg:hidden pointer-events-auto">
+                
+                <!-- Drawer Container -->
+                <div @click.stop
+                     x-transition:enter="transition ease-out duration-300 transform"
+                     x-transition:enter-start="translate-y-full"
+                     x-transition:enter-end="translate-y-0"
+                     x-transition:leave="transition ease-in duration-200 transform"
+                     x-transition:leave-start="translate-y-0"
+                     x-transition:leave-end="translate-y-full"
+                     class="absolute bottom-0 inset-x-0 glass rounded-t-[3rem] p-8 space-y-6 max-h-[85vh] overflow-y-auto pointer-events-auto">
+                    
+                    <div class="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-white/5">
+                        <h3 class="font-display font-bold text-lg text-gray-900 dark:text-white">Natha Admin Menu</h3>
+                        <button @click="mobileMenuOpen = false" class="w-8 h-8 rounded-full bg-white shadow-sm dark:bg-white/5 dark:shadow-none flex items-center justify-center text-sm font-bold">✕</button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <a href="admin-promo.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
+                            <span class="text-2xl mb-2">🏷️</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white">Promos & Vouchers</span>
+                        </a>
+                        <a href="scanner.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
+                            <span class="text-2xl mb-2">🔍</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white">QR Scanner</span>
+                        </a>
+                        <a href="admin-checkin.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
+                            <span class="text-2xl mb-2">✅</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white">Check-in Page</span>
+                        </a>
+                        <button @click="toggleTheme(); mobileMenuOpen = false" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
+                            <span class="text-2xl mb-2" x-text="isDark ? '☀️' : '🌙'">🌙</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white" x-text="isDark ? 'Light Mode' : 'Dark Mode'">Dark Mode</span>
+                        </button>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-200 dark:border-white/5">
+                        <button @click="logout()" class="w-full py-4 rounded-2xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-sm transition-all flex items-center justify-center gap-3">
+                            <span>🚪</span>
+                            <span>Sign Out / Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div x-show="modalOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-dark-900/80 backdrop-blur-sm" x-cloak>
+        <div class="glass w-full max-w-2xl rounded-[3rem] p-10 overflow-hidden relative shadow-2xl" @click.away="modalOpen = false" x-transition>
+            <h2 class="text-3xl font-display font-bold mb-8" x-text="editMode ? 'Edit Class' : 'Add New Class'"></h2>
+            
+            <form @submit.prevent="saveClass" class="space-y-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Title</label>
+                        <input type="text" x-model="formData.title" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Category</label>
+                        <select x-model="formData.category" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all">
+                            <option value="Hatha">Hatha Yoga</option>
+                            <option value="Vinyasa">Vinyasa Yoga</option>
+                            <option value="Yin">Yin Yoga</option>
+                            <option value="Power">Power Yoga</option>
+                            <option value="Restorative">Restorative</option>
+                            <option value="Meditation">Meditation</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Description</label>
+                    <textarea x-model="formData.description" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all h-24 resize-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Difficulty</label>
+                        <select x-model="formData.difficulty" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all">
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                            <option value="All Levels">All Levels</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Duration (Min)</label>
+                        <input type="number" x-model="formData.duration" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Price</label>
+                        <input type="number" x-model="formData.price" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Thumbnail URL</label>
+                    <input type="text" x-model="formData.thumbnail" placeholder="https://..." class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all">
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="button" @click="modalOpen = false" class="flex-1 py-4 rounded-2xl text-gray-500 font-bold hover:bg-white/5 transition-all">Cancel</button>
+                    <button type="submit" class="flex-[2] yoga-gradient py-4 rounded-2xl font-bold text-white shadow-xl shadow-yoga-500/20 active:scale-95 transition-all">
+                        <span x-text="loading ? 'Saving...' : 'Save Class'"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function classApp() {
+            return {
+                sidebarOpen: window.innerWidth > 1024,
+                classes: [],
+                searchQuery: '',
+                filterCategory: '',
+                filterDifficulty: '',
+                currentPage: 1,
+                itemsPerPage: 12,
+                loading: false,
+                modalOpen: false,
+                editMode: false,
+                formData: {
+                    id: '', title: '', description: '', category: 'Hatha',
+                    difficulty: 'Beginner', duration: 60, price: 0, thumbnail: ''
+                },
+
+                get filteredClasses() {
+                    let filtered = this.classes.filter(c => c.status !== 'deleted');
+                    if (this.searchQuery) {
+                        const q = this.searchQuery.toLowerCase();
+                        filtered = filtered.filter(c => 
+                            (c.title && c.title.toLowerCase().includes(q)) || 
+                            (c.description && c.description.toLowerCase().includes(q))
+                        );
+                    }
+                    if (this.filterCategory) {
+                        filtered = filtered.filter(c => c.category === this.filterCategory);
+                    }
+                    if (this.filterDifficulty) {
+                        filtered = filtered.filter(c => c.difficulty === this.filterDifficulty);
+                    }
+                    return filtered;
+                },
+                
+                get paginatedClasses() {
+                    return this.filteredClasses.slice(0, this.currentPage * this.itemsPerPage);
+                },
+                
+                get hasMore() {
+                    return this.paginatedClasses.length < this.filteredClasses.length;
+                },
+
+                isDark: false,
+                mobileMenuOpen: false,
+
+                initTheme() {
+                    this.isDark = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    if (this.isDark) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                },
+
+                toggleTheme() {
+                    this.isDark = !this.isDark;
+                    if (this.isDark) {
+                        document.documentElement.classList.add('dark');
+                        localStorage.theme = 'dark';
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.theme = 'light';
+                    }
+                },
+
+                async init() {
+                    this.initTheme();
+                    if (localStorage.getItem('yoga_admin_auth') !== 'true') {
+                        window.location.href = 'admin.html';
+                        return;
+                    }
+                    this.fetchClasses();
+                },
+
+                async fetchClasses() {
+                    this.loading = true;
+                    try {
+                        const res = await fetch(`${API.URL}?action=admin_classes`).then(r => r.json());
+                        if (res.success) this.classes = res.data;
+                    } finally { this.loading = false; }
+                },
+
+                openModal() {
+                    this.editMode = false;
+                    this.formData = { id: '', title: '', description: '', category: 'Hatha', difficulty: 'Beginner', duration: 60, price: 0, thumbnail: '' };
+                    this.modalOpen = true;
+                },
+
+                editClass(cls) {
+                    this.editMode = true;
+                    this.formData = { ...cls };
+                    this.modalOpen = true;
+                },
+
+                async saveClass() {
+                    this.loading = true;
+                    const action = this.editMode ? 'update_class' : 'create_class';
+                    try {
+                        const res = await fetch(API.URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ action, ...this.formData })
+                        }).then(r => r.json());
+
+                        if (res.success) {
+                            Swal.fire({ icon: 'success', title: 'Saved!', showConfirmButton: false, timer: 1500 });
+                            this.modalOpen = false;
+                            this.fetchClasses();
+                        }
+                    } finally { this.loading = false; }
+                },
+
+                async confirmDelete(id) {
+                    const { isConfirmed } = await Swal.fire({
+                        title: 'Delete Class?',
+                        text: 'This will hide the class from the system.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#334155',
+                        background: '#1e293b',
+                        color: '#fff'
+                    });
+
+                    if (isConfirmed) {
+                        const res = await fetch(API.URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ action: 'delete_class', id })
+                        }).then(r => r.json());
+
+                        if (res.success) this.fetchClasses();
+                    }
+                },
+
+                getDifficultyClass(diff) {
+                    switch(diff) {
+                        case 'Beginner': return 'bg-green-500';
+                        case 'Intermediate': return 'bg-orange-500';
+                        case 'Advanced': return 'bg-red-500';
+                        default: return 'bg-yoga-500';
+                    }
+                },
+
+                formatCurrency(v) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v); },
+                logout() { localStorage.removeItem('yoga_admin_auth'); window.location.href = 'admin.html'; }
+            }
+        }
+    </script>
+</body>
+</html>
