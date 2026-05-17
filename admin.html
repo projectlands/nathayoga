@@ -350,7 +350,7 @@
                     });
 
                     try {
-                        let type = action === 'checked_in' ? 'status' : 'payment_status';
+                        let type = action === 'paid' ? 'payment_status' : 'status';
                         const res = await fetch(`${API.URL}?action=update_status&booking_id=${id}&type=${type}&value=${action}`).then(r => r.json());
                         
                         if (res.success) {
