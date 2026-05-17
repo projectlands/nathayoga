@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Natha Yoga | Schedule Management</title>
+
+    <!-- PWA Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <link rel="apple-touch-icon" href="logo.jpg">
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <meta property="og:image" content="logo.jpg">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +25,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="js/api.js"></script>
     
-    <script>
+        <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -26,22 +33,26 @@
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
                     colors: {
                         yoga: {
-                            50: '#fcfaff',
-                            100: '#f5efff',
-                            200: '#ebdfff',
-                            300: '#d7c4ff',
-                            400: '#bfa3ff',
-                            500: '#a78bfa',
-                            600: '#906ef5',
-                            700: '#7853db',
-                            800: '#5f3eb0',
-                            900: '#432685'
+                            50: '#FDFBFD',
+                            100: '#F9F3F9',
+                            200: '#F4E7F4',
+                            300: '#E9D1EA',
+                            400: '#DFBBDF',
+                            500: '#D8B4E2',
+                            600: '#C08BCF',
+                            700: '#A765B9',
+                            800: '#7B6291',
+                            900: '#2D3142'
                         },
                         dark: {
                             900: '#121016',
                             800: '#1a1822',
                             700: '#252230'
                         }
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.06)',
+                        'glow': '0 10px 20px -5px rgba(216, 180, 226, 0.4)'
                     }
                 }
             }
@@ -50,23 +61,13 @@
 
     <style>
         [x-cloak] { display: none !important; }
-        body { background-color: #121016; color: white; }
-        .glass { background: rgba(26, 24, 34, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .yoga-gradient { background: linear-gradient(135deg, #bfa3ff 0%, #ffdce3 100%); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #252230; border-radius: 10px; }
-        .flatpickr-calendar { background: #1e293b !important; border: 1px solid rgba(255,255,255,0.1) !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important; }
-        
-        /* Fix Visibility for Select Options */
-        select option { background-color: #1e293b; color: white; }
-        
-        /* Spinner */
-        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-left-color: #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        body { background-color: #FDFBFD; color: #2D3142; }
+        .glass { background: #FFFFFF; border: none; box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05); }
+        .dark .glass { background: rgba(30, 28, 38, 0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5); }
+        .yoga-gradient { background: linear-gradient(135deg, #FFB6C1 0%, #D8B4E2 100%); color: white; }
     </style>
 </head>
-<body class="font-sans min-h-screen bg-dark-900 text-white" x-data="scheduleApp()">
+<body class="bg-yoga-50 dark:bg-dark-900 text-yoga-900 dark:text-gray-100 font-sans min-h-screen transition-colors duration-500" x-data="scheduleApp()">
 
     <div class="flex min-h-screen">
         
@@ -129,86 +130,167 @@
                     <p class="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Loading Schedules...</p>
                 </div>
 
+                <!-- Filters & Search -->
+                <div class="flex flex-col md:flex-row gap-4 justify-between mb-6" x-show="!loading && schedules.length > 0" x-cloak>
+                    <div class="flex-1 w-full relative">
+                        <input type="text" x-model="searchQuery" @input="currentPage = 1" placeholder="Search class, instructor, room..." class="w-full bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl px-6 py-3 pl-12 outline-none focus:ring-2 focus:ring-yoga-500 transition-all text-yoga-900 dark:text-white shadow-soft">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                    </div>
+                    <div class="w-full md:w-48">
+                        <select x-model="filterInstructor" @change="currentPage = 1" class="w-full bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl px-6 py-3 outline-none focus:ring-2 focus:ring-yoga-500 transition-all text-yoga-900 dark:text-white shadow-soft">
+                            <option value="">All Instructors</option>
+                            <template x-for="inst in uniqueInstructors" :key="inst">
+                                <option :value="inst" x-text="inst"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Schedule List -->
-                <div class="glass rounded-[3rem] overflow-hidden" x-show="!loading || schedules.length > 0">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-white/5 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                                    <th class="px-8 py-6">Date & Class</th>
-                                    <th class="px-8 py-6">Time (WITA)</th>
-                                    <th class="px-8 py-6">Instructor</th>
-                                    <th class="px-8 py-6">Room</th>
-                                    <th class="px-8 py-6 text-center">Slot</th>
-                                    <th class="px-8 py-6 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-white/5">
-                                <template x-if="schedules.length === 0 && !loading">
-                                    <tr>
-                                        <td colspan="6" class="px-8 py-20 text-center">
-                                            <div class="flex flex-col items-center gap-3 opacity-50">
-                                                <span class="text-4xl">📅</span>
-                                                <p class="text-xs font-bold uppercase tracking-widest">No schedules found</p>
-                                                <button @click="openModal()" class="text-yoga-400 text-[10px] underline">Create your first schedule</button>
-                                            </div>
-                                        </td>
+                <div x-show="!loading || schedules.length > 0">
+                    
+                    <!-- Desktop Table View -->
+                    <div class="hidden md:block glass rounded-[3rem] overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50/50 dark:bg-white/5 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                                        <th class="px-8 py-6">Date & Class</th>
+                                        <th class="px-8 py-6">Time (WITA)</th>
+                                        <th class="px-8 py-6">Instructor</th>
+                                        <th class="px-8 py-6">Room</th>
+                                        <th class="px-8 py-6 text-center">Slot</th>
+                                        <th class="px-8 py-6 text-right">Actions</th>
                                     </tr>
-                                </template>
-                                <template x-for="s in schedules" :key="s.id">
-                                    <tr class="hover:bg-white/5 transition-all">
-                                        <td class="px-8 py-6">
-                                            <p class="font-bold" x-text="formatDate(s.date)"></p>
-                                            <p class="text-xs text-yoga-400 font-bold uppercase" x-text="s.class_title"></p>
-                                        </td>
-                                        <td class="px-8 py-6 font-mono text-xs" x-text="s.formatted_time"></td>
-                                        <td class="px-8 py-6">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs">🧘</div>
-                                                <span class="text-sm" x-text="s.instructor"></span>
-                                            </div>
-                                        </td>
-                                        <td class="px-8 py-6 text-sm text-gray-400" x-text="s.room"></td>
-                                        <td class="px-8 py-6 text-center">
-                                            <button @click="showParticipants(s)" class="bg-yoga-500/10 hover:bg-yoga-500/25 border border-yoga-500/20 px-3 py-1 rounded-full text-xs font-bold text-yoga-400 transition-all cursor-pointer flex items-center gap-1.5 mx-auto">
-                                                <span>👥</span>
-                                                <span x-text="`${s.booked}/${s.quota}`"></span>
-                                            </button>
-                                        </td>
-                                        <td class="px-8 py-6 text-right space-x-2">
-                                            <button @click="openModal(s)" class="text-blue-400 hover:bg-blue-400/10 p-2 rounded-lg transition-all">✏️</button>
-                                            <button @click="confirmDelete(s.id)" class="text-red-400 hover:bg-red-400/10 p-2 rounded-lg transition-all">🗑️</button>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                                <template x-if="filteredSchedules.length === 0 && !loading">
+                                        <tr>
+                                            <td colspan="6" class="px-8 py-20 text-center">
+                                                <div class="flex flex-col items-center gap-3 opacity-50">
+                                                    <span class="text-4xl">📅</span>
+                                                    <p class="text-xs font-bold uppercase tracking-widest">No schedules found</p>
+                                                    <button @click="openModal()" class="text-yoga-500 dark:text-yoga-400 text-[10px] underline">Create your first schedule</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <template x-for="s in paginatedSchedules" :key="s.id">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
+                                            <td class="px-8 py-6">
+                                                <p class="font-bold text-yoga-900 dark:text-white" x-text="formatDate(s.date)"></p>
+                                                <p class="text-xs text-yoga-500 dark:text-yoga-400 font-bold uppercase" x-text="s.class_title"></p>
+                                            </td>
+                                            <td class="px-8 py-6 font-mono text-xs text-gray-500" x-text="s.formatted_time"></td>
+                                            <td class="px-8 py-6">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-8 h-8 rounded-full bg-yoga-50 dark:bg-white/10 flex items-center justify-center text-xs">🧘</div>
+                                                    <span class="text-sm font-bold text-yoga-900 dark:text-white" x-text="s.instructor"></span>
+                                                </div>
+                                            </td>
+                                            <td class="px-8 py-6 text-sm text-gray-400" x-text="s.room"></td>
+                                            <td class="px-8 py-6 text-center">
+                                                <button @click="showParticipants(s)" class="bg-yoga-50 dark:bg-yoga-500/10 hover:bg-yoga-100 dark:hover:bg-yoga-500/25 border border-yoga-100 dark:border-yoga-500/20 px-3 py-1 rounded-full text-xs font-bold text-yoga-600 dark:text-yoga-400 transition-all cursor-pointer flex items-center gap-1.5 mx-auto">
+                                                    <span>👥</span>
+                                                    <span x-text="`${s.booked}/${s.quota}`"></span>
+                                                </button>
+                                            </td>
+                                            <td class="px-8 py-6 text-right space-x-2">
+                                                <button @click="openModal(s)" class="text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-400/10 p-2 rounded-lg transition-all">✏️</button>
+                                                <button @click="confirmDelete(s.id)" class="text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-400/10 p-2 rounded-lg transition-all">🗑️</button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Card View -->
+                    <div class="md:hidden space-y-4 pb-4">
+                        <template x-if="filteredSchedules.length === 0 && !loading">
+                            <div class="py-20 text-center glass rounded-[2rem]">
+                                <div class="flex flex-col items-center gap-3 opacity-50">
+                                    <span class="text-4xl">📅</span>
+                                    <p class="text-xs font-bold uppercase tracking-widest">No schedules found</p>
+                                    <button @click="openModal()" class="text-yoga-500 text-[10px] underline">Create your first schedule</button>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-for="s in paginatedSchedules" :key="s.id">
+                            <div class="glass p-6 rounded-[2rem] shadow-soft bg-white dark:bg-dark-800 flex flex-col gap-4 border border-gray-50 dark:border-white/5">
+                                <div class="flex justify-between items-start border-b border-gray-100 dark:border-white/5 pb-4">
+                                    <div>
+                                        <p class="font-bold text-yoga-900 dark:text-white" x-text="formatDate(s.date)"></p>
+                                        <p class="text-xs text-yoga-500 font-bold uppercase mt-1" x-text="s.class_title"></p>
+                                        <p class="font-mono text-[11px] text-gray-500 mt-2" x-text="s.formatted_time"></p>
+                                    </div>
+                                    <button @click="showParticipants(s)" class="bg-yoga-50 dark:bg-yoga-500/10 px-3 py-1.5 rounded-full text-[10px] font-bold text-yoga-600 dark:text-yoga-400 flex items-center gap-1.5 shadow-sm border border-yoga-100 dark:border-yoga-500/20">
+                                        <span>👥</span> <span x-text="`${s.booked}/${s.quota}`"></span>
+                                    </button>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full bg-yoga-50 dark:bg-white/10 flex items-center justify-center text-sm">🧘</div>
+                                        <div>
+                                            <p class="text-[9px] text-gray-400 uppercase font-bold tracking-widest">Instructor</p>
+                                            <p class="text-xs font-bold text-yoga-900 dark:text-white leading-tight mt-0.5" x-text="s.instructor"></p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-[9px] text-gray-400 uppercase font-bold tracking-widest">Room</p>
+                                        <p class="text-xs font-bold text-yoga-900 dark:text-white leading-tight mt-0.5" x-text="s.room"></p>
+                                    </div>
+                                </div>
+                                <div class="pt-4 mt-2 border-t border-gray-100 dark:border-white/5 flex gap-2 justify-end">
+                                    <button @click="openModal(s)" class="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-400/10 px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest font-bold">Edit</button>
+                                    <button @click="confirmDelete(s.id)" class="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-400/10 px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest font-bold">Delete</button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <!-- Load More Button -->
+                    <div class="text-center mt-6 pb-10" x-show="hasMore" x-cloak>
+                        <button @click="currentPage++" class="glass px-8 py-3 rounded-full text-xs font-bold text-yoga-500 hover:scale-105 transition-all shadow-soft border border-gray-50 dark:border-white/5">
+                            Load More Schedules ↓
+                        </button>
                     </div>
                 </div>
             </main>
 
-            <!-- Mobile Bottom Navigation (Mobile Only) -->
-            <div class="fixed bottom-0 inset-x-0 z-40 px-4 pb-6 lg:hidden pointer-events-none">
-                <div class="max-w-md mx-auto h-20 glass rounded-[2rem] flex items-center justify-around px-4 pointer-events-auto shadow-2xl">
-                    <a href="admin.html" class="flex flex-col items-center gap-1 transition-all text-gray-400 hover:text-white">
-                        <span class="text-xl">📊</span>
-                        <span class="text-[9px] font-bold uppercase tracking-tighter">Dashboard</span>
+                        <!-- Mobile Bottom Navigation (Mobile Only) -->
+            <div class="fixed bottom-0 inset-x-0 z-40 px-6 pb-6 lg:hidden pointer-events-none">
+                <div class="max-w-md mx-auto h-[4.5rem] bg-white dark:bg-dark-800 rounded-full flex items-center justify-around px-4 pointer-events-auto shadow-soft border border-gray-50 dark:border-dark-700">
+                    <a href="admin.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors yoga-gradient shadow-glow text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Dash</span>
                     </a>
-                    <a href="admin-classes.html" class="flex flex-col items-center gap-1 transition-all text-gray-400 hover:text-white">
-                        <span class="text-xl">🧘</span>
-                        <span class="text-[9px] font-bold uppercase tracking-tighter">Classes</span>
+                    <a href="admin-classes.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin-classes.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Classes</span>
                     </a>
-                    <a href="admin-schedules.html" class="flex flex-col items-center gap-1 transition-all text-yoga-400">
-                        <span class="text-xl">📅</span>
-                        <span class="text-[9px] font-bold uppercase tracking-tighter">Schedules</span>
+                    <a href="admin-schedules.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-yoga-500 -translate-y-2" data-id="admin-schedules.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Jadwal</span>
                     </a>
-                    <a href="admin-membership.html" class="flex flex-col items-center gap-1 transition-all text-gray-400 hover:text-white">
-                        <span class="text-xl">💎</span>
-                        <span class="text-[9px] font-bold uppercase tracking-tighter">Members</span>
+                    <a href="admin-membership.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin-membership.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Member</span>
                     </a>
-                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="flex flex-col items-center gap-1 transition-all text-gray-400 hover:text-white">
-                        <span class="text-xl">☰</span>
-                        <span class="text-[9px] font-bold uppercase tracking-tighter">Menu</span>
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Menu</span>
                     </button>
                 </div>
             </div>
@@ -222,7 +304,7 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden pointer-events-auto">
+                 class="fixed inset-0 z-50 bg-black/20 backdrop-blur-md dark:bg-black/60 backdrop-blur-sm lg:hidden pointer-events-auto">
                 
                 <!-- Drawer Container -->
                 <div @click.stop
@@ -234,31 +316,31 @@
                      x-transition:leave-end="translate-y-full"
                      class="absolute bottom-0 inset-x-0 glass rounded-t-[3rem] p-8 space-y-6 max-h-[85vh] overflow-y-auto pointer-events-auto">
                     
-                    <div class="flex justify-between items-center pb-4 border-b border-white/5">
-                        <h3 class="font-display font-bold text-lg text-white">Natha Admin Menu</h3>
-                        <button @click="mobileMenuOpen = false" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-sm font-bold">✕</button>
+                    <div class="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-white/5">
+                        <h3 class="font-display font-bold text-lg text-gray-900 dark:text-white">Natha Admin Menu</h3>
+                        <button @click="mobileMenuOpen = false" class="w-8 h-8 rounded-full bg-white shadow-sm dark:bg-white/5 dark:shadow-none flex items-center justify-center text-sm font-bold">✕</button>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <a href="admin-promo.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 text-center">
+                        <a href="admin-promo.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
                             <span class="text-2xl mb-2">🏷️</span>
-                            <span class="text-xs font-bold text-white">Promos & Vouchers</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white">Promos & Vouchers</span>
                         </a>
-                        <a href="scanner.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 text-center">
+                        <a href="scanner.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
                             <span class="text-2xl mb-2">🔍</span>
-                            <span class="text-xs font-bold text-white">QR Scanner</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white">QR Scanner</span>
                         </a>
-                        <a href="admin-checkin.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 text-center">
+                        <a href="admin-checkin.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
                             <span class="text-2xl mb-2">✅</span>
-                            <span class="text-xs font-bold text-white">Check-in Page</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white">Check-in Page</span>
                         </a>
-                        <button @click="toggleTheme(); mobileMenuOpen = false" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 text-center">
+                        <button @click="toggleTheme(); mobileMenuOpen = false" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
                             <span class="text-2xl mb-2" x-text="isDark ? '☀️' : '🌙'">🌙</span>
-                            <span class="text-xs font-bold text-white" x-text="isDark ? 'Light Mode' : 'Dark Mode'">Dark Mode</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white" x-text="isDark ? 'Light Mode' : 'Dark Mode'">Dark Mode</span>
                         </button>
                     </div>
 
-                    <div class="pt-4 border-t border-white/5">
+                    <div class="pt-4 border-t border-gray-200 dark:border-white/5">
                         <button @click="logout()" class="w-full py-4 rounded-2xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-sm transition-all flex items-center justify-center gap-3">
                             <span>🚪</span>
                             <span>Sign Out / Logout</span>
@@ -354,6 +436,10 @@
             return {
                 sidebarOpen: window.innerWidth > 1024,
                 schedules: [],
+                searchQuery: '',
+                filterInstructor: '',
+                currentPage: 1,
+                itemsPerPage: 10,
                 classes: [],
                 loading: true,
                 modalOpen: false,
@@ -361,6 +447,34 @@
                     class_id: '', instructor: '', date: '', start_time: '', 
                     end_time: '', room: 'Main Room', quota: 20, 
                     recurring_type: 'one_time', recurring_until: '', timezone: 'WITA'
+                },
+
+                get filteredSchedules() {
+                    let filtered = this.schedules;
+                    if (this.searchQuery) {
+                        const q = this.searchQuery.toLowerCase();
+                        filtered = filtered.filter(s => 
+                            (s.class_title && s.class_title.toLowerCase().includes(q)) || 
+                            (s.instructor && s.instructor.toLowerCase().includes(q)) ||
+                            (s.room && s.room.toLowerCase().includes(q))
+                        );
+                    }
+                    if (this.filterInstructor) {
+                        filtered = filtered.filter(s => s.instructor === this.filterInstructor);
+                    }
+                    return filtered;
+                },
+                
+                get paginatedSchedules() {
+                    return this.filteredSchedules.slice(0, this.currentPage * this.itemsPerPage);
+                },
+                
+                get hasMore() {
+                    return this.paginatedSchedules.length < this.filteredSchedules.length;
+                },
+                
+                get uniqueInstructors() {
+                    return [...new Set(this.schedules.map(s => s.instructor).filter(Boolean))];
                 },
 
                 isDark: false,

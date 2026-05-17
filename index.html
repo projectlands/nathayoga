@@ -9,7 +9,13 @@
     <!-- PWA Meta -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#8b5cf6">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3048/3048383.png">
+    <link rel="apple-touch-icon" href="logo.jpg">
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <meta property="og:image" content="logo.jpg">
+
+    
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <meta property="og:image" content="logo.jpg">
 
     <!-- Fonts: Outfit & Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,22 +40,26 @@
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
                     colors: {
                         yoga: {
-                            50: '#fcfaff',
-                            100: '#f5efff',
-                            200: '#ebdfff',
-                            300: '#d7c4ff',
-                            400: '#bfa3ff',
-                            500: '#a78bfa',
-                            600: '#906ef5',
-                            700: '#7853db',
-                            800: '#5f3eb0',
-                            900: '#432685'
+                            50: '#FDFBFD',
+                            100: '#F9F3F9',
+                            200: '#F4E7F4',
+                            300: '#E9D1EA',
+                            400: '#DFBBDF',
+                            500: '#D8B4E2', // Primary Lilac
+                            600: '#C08BCF',
+                            700: '#A765B9',
+                            800: '#7B6291',
+                            900: '#2D3142' // Dark Navy text
                         },
                         dark: {
                             900: '#121016',
                             800: '#1a1822',
                             700: '#252230'
                         }
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.06)',
+                        'glow': '0 10px 20px -5px rgba(216, 180, 226, 0.4)'
                     }
                 }
             }
@@ -57,88 +67,80 @@
     </script>
 
     <style>
-        [x-cloak] {
-            display: none !important;
+        [x-cloak] { display: none !important; }
+
+        body {
+            background-color: #FDFBFD;
+            color: #2D3142;
         }
 
         .glass {
-            background: rgba(26, 24, 34, 0.4);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: #FFFFFF;
+            border: none;
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
         }
 
         .dark .glass {
-            background: rgba(18, 16, 22, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.03);
+            background: rgba(30, 28, 38, 0.8);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
         }
 
         .yoga-gradient {
-            background: linear-gradient(135deg, #bfa3ff 0%, #ffdce3 100%);
+            background: linear-gradient(135deg, #FFB6C1 0%, #D8B4E2 100%);
+            color: white;
+        }
+
+        .yoga-gradient-text {
+            background: linear-gradient(135deg, #FFB6C1 0%, #D8B4E2 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .pill-button {
+            border-radius: 9999px;
         }
 
         .shimmer {
-            background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.05) 50%, transparent 75%);
+            background: linear-gradient(90deg, transparent 25%, rgba(0, 0, 0, 0.03) 50%, transparent 75%);
             background-size: 200% 100%;
             animation: shimmer 2s infinite;
         }
+        .dark .shimmer { background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.05) 50%, transparent 75%); }
 
         @keyframes shimmer {
-            from {
-                background-position: 200% 0;
-            }
-
-            to {
-                background-position: -200% 0;
-            }
+            from { background-position: 200% 0; }
+            to { background-position: -200% 0; }
         }
 
-        /* App Like Transitions */
-        .page-enter {
-            animation: slideUp 0.4s ease-out forwards;
-        }
-
+        .page-enter { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .bottom-nav-shadow {
-            box-shadow: 0 -4px 20px -5px rgba(0, 0, 0, 0.3);
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 
-<body
-    class="bg-yoga-50 dark:bg-dark-900 text-dark-800 dark:text-gray-100 transition-colors duration-500 font-sans selection:bg-yoga-500/20 overflow-x-hidden"
-    x-data="yogaApp()">
+<body class="bg-yoga-50 dark:bg-dark-900 text-yoga-900 dark:text-gray-100 transition-colors duration-500 font-sans selection:bg-yoga-500/20 overflow-x-hidden" x-data="yogaApp()">
 
     <!-- Splash Screen (Premium Loading) -->
     <div x-show="showSplash" x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="fixed inset-0 z-[100] bg-dark-900 flex flex-col items-center justify-center">
+        class="fixed inset-0 z-[100] bg-white dark:bg-dark-900 flex flex-col items-center justify-center">
         <div class="relative">
-            <div
-                class="w-24 h-24 yoga-gradient rounded-[2rem] flex items-center justify-center animate-bounce shadow-2xl">
-                <span class="text-4xl font-bold text-white font-display">N</span>
+            <div class="w-24 h-24 rounded-[2rem] flex items-center justify-center animate-bounce shadow-glow overflow-hidden bg-white">
+                <img src="logo.jpg" alt="Natha Yoga Logo" class="w-full h-full object-cover">
             </div>
-            <div class="absolute -inset-4 yoga-gradient opacity-20 blur-2xl rounded-full animate-pulse"></div>
         </div>
-        <h2 class="mt-8 text-2xl font-display font-bold text-white tracking-tight">Natha Yoga</h2>
-        <p class="mt-2 text-yoga-400 text-xs font-bold uppercase tracking-[0.3em] opacity-60">Premium Wellness</p>
+        <h2 class="mt-8 text-2xl font-display font-bold text-yoga-900 dark:text-white tracking-tight">Natha Yoga</h2>
+        <p class="mt-2 text-yoga-500 text-xs font-bold uppercase tracking-[0.3em] opacity-80">Premium Wellness</p>
     </div>
 
     <!-- Offline Notification Banner -->
     <div x-show="!isOnline" x-transition class="fixed top-20 inset-x-4 z-[70] pointer-events-none">
-        <div
-            class="max-w-md mx-auto bg-red-500 text-white px-6 py-3 rounded-2xl flex items-center justify-between shadow-xl pointer-events-auto">
+        <div class="max-w-md mx-auto bg-red-500 text-white px-6 py-3 rounded-full flex items-center justify-between shadow-xl pointer-events-auto">
             <div class="flex items-center gap-3">
                 <span class="text-xl">📡</span>
                 <span class="text-sm font-bold">Koneksi Terputus. Mode Offline Aktif.</span>
@@ -147,17 +149,13 @@
     </div>
 
     <!-- Top Bar -->
-    <nav class="fixed top-0 inset-x-0 z-50 px-4 py-3 pointer-events-none">
-        <div
-            class="max-w-xl mx-auto flex justify-between items-center glass rounded-2xl px-5 py-2 pointer-events-auto shadow-sm">
-            <div class="flex items-center gap-2 cursor-pointer" @click="view = 'home'">
-                <div
-                    class="w-8 h-8 yoga-gradient rounded-xl flex items-center justify-center font-bold text-white shadow-lg">
-                    N</div>
-                <span class="font-display font-bold text-lg tracking-tight">Natha Yoga</span>
-            </div>
-            <button @click="toggleTheme()"
-                class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-yoga-500/10 transition-all text-xl">
+    <nav class="fixed top-0 inset-x-0 z-50 px-6 py-4 pointer-events-none">
+        <div class="max-w-xl mx-auto flex justify-between items-center pointer-events-auto">
+            <button @click="view = 'home'" class="w-10 h-10 bg-white dark:bg-dark-800 rounded-full flex items-center justify-center shadow-soft text-yoga-900 dark:text-white hover:scale-105 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <span class="font-display font-bold text-lg tracking-tight text-yoga-900 dark:text-white">Natha Yoga</span>
+            <button @click="toggleTheme()" class="w-10 h-10 bg-white dark:bg-dark-800 rounded-full flex items-center justify-center shadow-soft text-yoga-900 dark:text-white hover:scale-105 transition-all">
                 <span x-show="!isDark">🌙</span>
                 <span x-show="isDark">☀️</span>
             </button>
@@ -207,73 +205,55 @@
         </div>
 
         <!-- VIEW: CLASSES -->
-        <div x-show="view === 'classes'" class="px-4 page-enter">
-            <header class="mb-8 pt-4 px-2">
-                <h2 class="text-3xl font-display font-bold">Jadwal Kelas</h2>
-                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Pilih sesi yang sesuai dengan kebutuhan Anda.
-                </p>
+        <div x-show="view === 'classes'" class="px-6 page-enter">
+            <header class="mb-6 pt-2 text-center">
+                <h2 class="text-4xl font-display font-bold text-yoga-900 dark:text-white">Jadwal Kelas</h2>
+                <p class="text-gray-400 text-sm mt-2">Pilih sesi untuk latihan hari ini</p>
             </header>
 
             <!-- Skeleton Loading -->
-            <div x-show="loading" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <template x-for="i in 3">
-                    <div class="glass rounded-[2rem] p-4 h-[380px] relative overflow-hidden">
+            <div x-show="loading" class="grid grid-cols-1 gap-4">
+                <template x-for="i in 4">
+                    <div class="glass rounded-3xl p-4 h-24 relative overflow-hidden flex items-center gap-4">
                         <div class="shimmer absolute inset-0"></div>
-                        <div class="w-full h-40 bg-gray-800/20 rounded-2xl mb-4"></div>
-                        <div class="w-2/3 h-6 bg-gray-800/20 rounded-lg mb-2"></div>
-                        <div class="w-1/2 h-4 bg-gray-800/20 rounded-lg"></div>
+                        <div class="w-16 h-16 bg-gray-100 dark:bg-dark-800 rounded-2xl"></div>
+                        <div class="flex-1">
+                            <div class="w-1/3 h-3 bg-gray-100 dark:bg-dark-800 rounded-full mb-2"></div>
+                            <div class="w-2/3 h-4 bg-gray-100 dark:bg-dark-800 rounded-full"></div>
+                        </div>
                     </div>
                 </template>
             </div>
 
-            <!-- Class Cards Grid -->
-            <div x-show="!loading" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Class Cards Grid (List Style) -->
+            <div x-show="!loading" class="grid grid-cols-1 gap-4">
                 <template x-for="s in classes" :key="s.id">
-                    <div class="glass rounded-[2.5rem] p-4 group hover:border-yoga-500/30 transition-all duration-500 flex flex-col relative overflow-hidden" x-show="s.status === 'active'">
-                        <div class="absolute top-6 right-6 z-10">
-                            <span class="bg-dark-900/60 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1.5 rounded-full border border-white/10" x-text="s.difficulty"></span>
-                        </div>
-                        <div class="relative h-44 rounded-[1.8rem] overflow-hidden mb-5">
+                    <div class="glass rounded-3xl p-4 hover:shadow-glow transition-all duration-300 flex items-center gap-4 relative overflow-hidden bg-white dark:bg-dark-800" x-show="s.status === 'active'">
+                        
+                        <!-- Left Thumbnail -->
+                        <div class="w-[4.5rem] h-[4.5rem] shrink-0 rounded-2xl overflow-hidden relative shadow-soft">
                             <img :src="s.class_thumbnail || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800'"
-                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Yoga">
-                            <div class="absolute inset-0 bg-gradient-to-t from-dark-900/80 via-transparent to-transparent"></div>
-                            <div class="absolute bottom-4 left-4 flex gap-2">
-                                <span class="bg-yoga-500 text-white text-[10px] uppercase font-bold px-3 py-1 rounded-full shadow-lg" x-text="s.instructor"></span>
-                                <span class="bg-yoga-600 text-white text-[10px] uppercase font-bold px-3 py-1 rounded-full shadow-lg" x-text="s.category"></span>
+                                class="w-full h-full object-cover" alt="Yoga">
+                        </div>
+                        
+                        <!-- Middle Info -->
+                        <div class="flex-1 min-w-0 py-1">
+                            <p class="text-[10px] text-yoga-500 font-bold uppercase tracking-wider mb-0.5" x-text="s.formatted_time"></p>
+                            <h3 class="text-base font-bold text-yoga-900 dark:text-white font-display leading-tight truncate" x-text="s.class_title"></h3>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-xs text-gray-500" x-text="s.instructor ? '🧘 ' + s.instructor : ''"></span>
+                                <span class="text-[10px] bg-yoga-50 dark:bg-dark-700 text-yoga-600 px-2 py-0.5 rounded-full" x-text="s.booked + '/' + s.quota + ' Slot'"></span>
                             </div>
                         </div>
-                        <div class="px-2 pb-2 flex-1 flex flex-col">
-                            <h3 class="text-xl font-bold mb-3 font-display leading-tight" x-text="s.class_title"></h3>
-                            <div class="space-y-2.5 mb-6">
-                                <div class="flex items-center text-gray-500 dark:text-gray-400 text-xs gap-3">
-                                    <span class="w-6 h-6 flex items-center justify-center bg-yoga-500/10 rounded-lg text-yoga-500 text-sm">📅</span>
-                                    <span x-text="s.formatted_date"></span>
-                                </div>
-                                <div class="flex items-center text-gray-500 dark:text-gray-400 text-xs gap-3">
-                                    <span class="w-6 h-6 flex items-center justify-center bg-yoga-500/10 rounded-lg text-yoga-500 text-sm">🕒</span>
-                                    <span x-text="s.formatted_time"></span>
-                                </div>
-                                <div class="mt-4">
-                                    <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-2">
-                                        <span class="text-gray-500">Slot Tersedia</span>
-                                        <span :class="s.booked >= s.quota ? 'text-red-400' : 'text-yoga-400'"
-                                            x-text="s.booked >= s.quota ? 'Fully Booked' : `${s.quota - s.booked} Tersisa`"></span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                                        <div class="h-full yoga-gradient transition-all duration-1000"
-                                            :style="`width: ${(s.booked/s.quota)*100}%`"
-                                            :class="s.booked >= s.quota ? 'from-red-500 to-red-600' : ''"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-auto flex items-center justify-between gap-4 pt-4 border-t border-white/5">
-                                <p class="text-lg font-bold" x-text="formatPrice(s.price)"></p>
-                                <button @click="openBooking(s)" :disabled="s.booked >= s.quota"
-                                    class="flex-1 py-3.5 rounded-2xl font-bold transition-all disabled:opacity-30 disabled:grayscale text-sm"
-                                    :class="s.booked >= s.quota ? 'bg-gray-700' : 'yoga-gradient hover:shadow-lg hover:shadow-yoga-500/20 active:scale-95 text-white'">
-                                    <span x-text="s.booked >= s.quota ? 'PENUH' : 'PESAN'"></span>
-                                </button>
-                            </div>
+                        
+                        <!-- Right Action -->
+                        <div class="flex flex-col items-end gap-2 shrink-0 justify-center">
+                            <button @click="openBooking(s)" :disabled="s.booked >= s.quota"
+                                class="w-11 h-11 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:grayscale"
+                                :class="s.booked >= s.quota ? 'bg-gray-100 dark:bg-dark-700 text-gray-400' : 'yoga-gradient shadow-glow hover:scale-105 active:scale-95'">
+                                <svg x-show="s.booked < s.quota" class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                                <span x-show="s.booked >= s.quota" class="text-sm font-bold text-gray-400">Penuh</span>
+                            </button>
                         </div>
                     </div>
                 </template>
@@ -381,33 +361,42 @@
     </main>
 
     <!-- Bottom Navigation -->
-    <div class="fixed bottom-0 inset-x-0 z-50 px-4 pb-6 pointer-events-none">
-        <div
-            class="max-w-md mx-auto h-18 glass rounded-[2rem] flex items-center justify-around px-4 pointer-events-auto shadow-2xl">
-            <button @click="view = 'home'" class="flex flex-col items-center gap-1 transition-all"
-                :class="view === 'home' ? 'text-yoga-500' : 'text-gray-400'">
-                <span class="text-2xl">🏠</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">Home</span>
+    <div class="fixed bottom-0 inset-x-0 z-50 px-6 pb-6 pointer-events-none">
+        <div class="max-w-md mx-auto h-[4.5rem] bg-white dark:bg-dark-800 rounded-full flex items-center justify-around px-4 pointer-events-auto shadow-soft border border-gray-50 dark:border-dark-700">
+            <button @click="view = 'home'" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all"
+                :class="view === 'home' ? 'text-yoga-500 -translate-y-2' : 'text-gray-400 hover:text-yoga-500'">
+                <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors" :class="view === 'home' ? 'yoga-gradient shadow-glow text-white' : ''">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                </div>
+                <span class="text-[9px] font-bold" x-show="view === 'home'">Home</span>
             </button>
-            <button @click="view = 'classes'" class="flex flex-col items-center gap-1 transition-all"
-                :class="view === 'classes' ? 'text-yoga-500' : 'text-gray-400'">
-                <span class="text-2xl">🧘</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">Classes</span>
+            <button @click="view = 'classes'" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all"
+                :class="view === 'classes' ? 'text-yoga-500 -translate-y-2' : 'text-gray-400 hover:text-yoga-500'">
+                <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors" :class="view === 'classes' ? 'yoga-gradient shadow-glow text-white' : ''">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <span class="text-[9px] font-bold" x-show="view === 'classes'">Classes</span>
             </button>
-            <a href="membership.html" class="flex flex-col items-center gap-1"
-                :class="view === 'membership' ? 'text-yoga-500' : 'text-gray-500'">
-                <span class="text-xl">💎</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest">Member</span>
+            <a href="membership.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all"
+                :class="view === 'membership' ? 'text-yoga-500 -translate-y-2' : 'text-gray-400 hover:text-yoga-500'">
+                <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors" :class="view === 'membership' ? 'yoga-gradient shadow-glow text-white' : ''">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                </div>
+                <span class="text-[9px] font-bold" x-show="view === 'membership'">Member</span>
             </a>
-            <button @click="view = 'my-bookings'; checkMyBookings()" class="flex flex-col items-center gap-1"
-                :class="view === 'my-bookings' ? 'text-yoga-500' : 'text-gray-500'">
-                <span class="text-2xl">🎟️</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">Booking</span>
+            <button @click="view = 'my-bookings'; checkMyBookings()" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all"
+                :class="view === 'my-bookings' ? 'text-yoga-500 -translate-y-2' : 'text-gray-400 hover:text-yoga-500'">
+                <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors" :class="view === 'my-bookings' ? 'yoga-gradient shadow-glow text-white' : ''">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <span class="text-[9px] font-bold" x-show="view === 'my-bookings'">Booking</span>
             </button>
-            <button @click="view = 'profile'" class="flex flex-col items-center gap-1 transition-all"
-                :class="view === 'profile' ? 'text-yoga-500' : 'text-gray-400'">
-                <span class="text-2xl">👤</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">Profile</span>
+            <button @click="view = 'profile'" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all"
+                :class="view === 'profile' ? 'text-yoga-500 -translate-y-2' : 'text-gray-400 hover:text-yoga-500'">
+                <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors" :class="view === 'profile' ? 'yoga-gradient shadow-glow text-white' : ''">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </div>
+                <span class="text-[9px] font-bold" x-show="view === 'profile'">Profile</span>
             </button>
         </div>
     </div>

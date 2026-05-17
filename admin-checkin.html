@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Natha Yoga | Admin Dynamic Check-in</title>
+
+    <!-- PWA Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <link rel="apple-touch-icon" href="logo.jpg">
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <meta property="og:image" content="logo.jpg">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +23,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
     
-    <script>
+        <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -24,22 +31,26 @@
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
                     colors: {
                         yoga: {
-                            50: '#fcfaff',
-                            100: '#f5efff',
-                            200: '#ebdfff',
-                            300: '#d7c4ff',
-                            400: '#bfa3ff',
-                            500: '#a78bfa',
-                            600: '#906ef5',
-                            700: '#7853db',
-                            800: '#5f3eb0',
-                            900: '#432685'
+                            50: '#FDFBFD',
+                            100: '#F9F3F9',
+                            200: '#F4E7F4',
+                            300: '#E9D1EA',
+                            400: '#DFBBDF',
+                            500: '#D8B4E2',
+                            600: '#C08BCF',
+                            700: '#A765B9',
+                            800: '#7B6291',
+                            900: '#2D3142'
                         },
                         dark: {
                             900: '#121016',
                             800: '#1a1822',
                             700: '#252230'
                         }
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.06)',
+                        'glow': '0 10px 20px -5px rgba(216, 180, 226, 0.4)'
                     }
                 }
             }
@@ -48,15 +59,13 @@
 
     <style>
         [x-cloak] { display: none !important; }
-        body { background-color: #121016; color: white; }
-        .glass { background: rgba(26, 24, 34, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .yoga-gradient { background: linear-gradient(135deg, #bfa3ff 0%, #ffdce3 100%); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #252230; border-radius: 10px; }
+        body { background-color: #FDFBFD; color: #2D3142; }
+        .glass { background: #FFFFFF; border: none; box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05); }
+        .dark .glass { background: rgba(30, 28, 38, 0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5); }
+        .yoga-gradient { background: linear-gradient(135deg, #FFB6C1 0%, #D8B4E2 100%); color: white; }
     </style>
 </head>
-<body class="font-sans min-h-screen bg-dark-900 text-white" x-data="adminCheckin()">
+<body class="bg-yoga-50 dark:bg-dark-900 text-yoga-900 dark:text-gray-100 font-sans min-h-screen transition-colors duration-500" x-data="adminCheckin()">
 
     <div class="flex min-h-screen">
         
@@ -253,28 +262,38 @@
 
     </main>
 
-            <!-- Mobile Bottom Navigation (Mobile Only) -->
-            <div class="fixed bottom-0 inset-x-0 z-40 px-4 pb-6 lg:hidden pointer-events-none">
-                <div class="max-w-md mx-auto h-20 glass rounded-[2rem] flex items-center justify-around px-4 pointer-events-auto shadow-2xl">
-                    <a href="admin.html" class="flex flex-col items-center gap-1 transition-all text-gray-400 hover:text-white">
-                        <span class="text-xl">📊</span>
-                        <span class="text-[9px] font-bold uppercase tracking-tighter">Dashboard</span>
+                        <!-- Mobile Bottom Navigation (Mobile Only) -->
+            <div class="fixed bottom-0 inset-x-0 z-40 px-6 pb-6 lg:hidden pointer-events-none">
+                <div class="max-w-md mx-auto h-[4.5rem] bg-white dark:bg-dark-800 rounded-full flex items-center justify-around px-4 pointer-events-auto shadow-soft border border-gray-50 dark:border-dark-700">
+                    <a href="admin.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors yoga-gradient shadow-glow text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Dash</span>
                     </a>
-                    <a href="admin-classes.html" class="flex flex-col items-center gap-1 transition-all text-gray-400 hover:text-white">
-                        <span class="text-xl">🧘</span>
-                        <span class="text-[9px] font-bold uppercase tracking-tighter">Classes</span>
+                    <a href="admin-classes.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin-classes.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Classes</span>
                     </a>
-                    <a href="admin-schedules.html" class="flex flex-col items-center gap-1 transition-all text-gray-400 hover:text-white">
-                        <span class="text-xl">📅</span>
-                        <span class="text-[9px] font-bold uppercase tracking-tighter">Schedules</span>
+                    <a href="admin-schedules.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin-schedules.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Jadwal</span>
                     </a>
-                    <a href="admin-membership.html" class="flex flex-col items-center gap-1 transition-all text-gray-400 hover:text-white">
-                        <span class="text-xl">💎</span>
-                        <span class="text-[9px] font-bold uppercase tracking-tighter">Members</span>
+                    <a href="admin-membership.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500" data-id="admin-membership.html">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Member</span>
                     </a>
-                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="flex flex-col items-center gap-1 transition-all text-gray-400 hover:text-white">
-                        <span class="text-xl">☰</span>
-                        <span class="text-[9px] font-bold uppercase tracking-tighter">Menu</span>
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all text-gray-400 hover:text-yoga-500">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </div>
+                        <span class="text-[9px] font-bold">Menu</span>
                     </button>
                 </div>
             </div>
@@ -288,7 +307,7 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden pointer-events-auto">
+                 class="fixed inset-0 z-50 bg-black/20 backdrop-blur-md dark:bg-black/60 backdrop-blur-sm lg:hidden pointer-events-auto">
                 
                 <!-- Drawer Container -->
                 <div @click.stop
@@ -300,31 +319,31 @@
                      x-transition:leave-end="translate-y-full"
                      class="absolute bottom-0 inset-x-0 glass rounded-t-[3rem] p-8 space-y-6 max-h-[85vh] overflow-y-auto pointer-events-auto">
                     
-                    <div class="flex justify-between items-center pb-4 border-b border-white/5">
-                        <h3 class="font-display font-bold text-lg text-white">Natha Admin Menu</h3>
-                        <button @click="mobileMenuOpen = false" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-sm font-bold">✕</button>
+                    <div class="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-white/5">
+                        <h3 class="font-display font-bold text-lg text-gray-900 dark:text-white">Natha Admin Menu</h3>
+                        <button @click="mobileMenuOpen = false" class="w-8 h-8 rounded-full bg-white shadow-sm dark:bg-white/5 dark:shadow-none flex items-center justify-center text-sm font-bold">✕</button>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <a href="admin-promo.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 text-center">
+                        <a href="admin-promo.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
                             <span class="text-2xl mb-2">🏷️</span>
-                            <span class="text-xs font-bold text-white">Promos & Vouchers</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white">Promos & Vouchers</span>
                         </a>
-                        <a href="scanner.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 text-center">
+                        <a href="scanner.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
                             <span class="text-2xl mb-2">🔍</span>
-                            <span class="text-xs font-bold text-white">QR Scanner</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white">QR Scanner</span>
                         </a>
-                        <a href="admin-checkin.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 text-center">
+                        <a href="admin-checkin.html" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
                             <span class="text-2xl mb-2">✅</span>
-                            <span class="text-xs font-bold text-white">Check-in Page</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white">Check-in Page</span>
                         </a>
-                        <button @click="toggleTheme(); mobileMenuOpen = false" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 text-center">
+                        <button @click="toggleTheme(); mobileMenuOpen = false" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white shadow-sm dark:bg-white/5 dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/5 text-center">
                             <span class="text-2xl mb-2" x-text="isDark ? '☀️' : '🌙'">🌙</span>
-                            <span class="text-xs font-bold text-white" x-text="isDark ? 'Light Mode' : 'Dark Mode'">Dark Mode</span>
+                            <span class="text-xs font-bold text-gray-900 dark:text-white" x-text="isDark ? 'Light Mode' : 'Dark Mode'">Dark Mode</span>
                         </button>
                     </div>
 
-                    <div class="pt-4 border-t border-white/5">
+                    <div class="pt-4 border-t border-gray-200 dark:border-white/5">
                         <button @click="logout()" class="w-full py-4 rounded-2xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-sm transition-all flex items-center justify-center gap-3">
                             <span>🚪</span>
                             <span>Sign Out / Logout</span>
