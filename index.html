@@ -754,7 +754,7 @@
                                     schDate.setHours(23, 59, 59, 999);
                                 }
                                 return schDate > now;
-                            });
+                            }).sort((a, b) => new Date(a.date) - new Date(b.date)); // Jadwal terdekat di atas
                         }
                     } catch (e) {
                         this.isOnline = false;
@@ -913,7 +913,10 @@
                     this.loading = true;
                     try {
                         const res = await APP_API.fetch('my_bookings', `&phone=${this.searchPhone.replace(/[^0-9]/g, "")}`);
-                        if (res.success) this.myBookings = res.data;
+                        if (res.success) {
+                            // Urutkan dari jadwal yang terbaru/terakhir
+                            this.myBookings = res.data.sort((a, b) => new Date(b.sch_raw_date || b.created_at) - new Date(a.sch_raw_date || a.created_at));
+                        }
                     } finally { this.loading = false; }
                 },
 
