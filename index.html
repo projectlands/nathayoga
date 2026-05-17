@@ -697,7 +697,7 @@
                 },
 
                 generateWALink(b, finalPrice) {
-                    const waAdmin = "6281234567890"; // GANTI DENGAN NOMOR WA ANDA
+                    const waAdmin = "6282247338792"; // GANTI DENGAN NOMOR WA ANDA
                     const msg = `Halo Admin Natha Yoga,\n\nSaya baru saja melakukan reservasi kelas yoga.\n\n*Detail Booking:*\n- Booking ID: ${b.id}\n- Nama: ${b.name}\n- Kelas: ${b.class}\n- Tanggal: ${b.date}\n- Jam: ${b.time}\n- *Total Bayar: ${this.formatPrice(finalPrice)}*\n\nMohon konfirmasi reservasi saya 🙏`;
                     return `https://wa.me/${waAdmin}?text=${encodeURIComponent(msg)}`;
                 },
