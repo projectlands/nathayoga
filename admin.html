@@ -126,7 +126,7 @@
                         <p class="text-xs font-bold" x-text="lastRefresh">12:00:00</p>
                         <p class="text-[10px] text-gray-500 uppercase">Last Sync</p>
                     </div>
-                    <button @click="fetchData()" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:scale-110 transition-all">🔄</button>
+                    <button @click="fetchData()" :class="loading ? 'animate-spin cursor-not-allowed pointer-events-none' : ''" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:scale-110 transition-all">🔄</button>
                 </div>
             </header>
 
@@ -181,6 +181,34 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-white/5">
+                                    <!-- Loading State -->
+                                    <template x-if="loading && bookings.length === 0">
+                                        <tr>
+                                            <td colspan="4" class="px-8 py-20 text-center">
+                                                <div class="flex flex-col items-center justify-center gap-4">
+                                                    <div class="relative w-12 h-12 flex items-center justify-center">
+                                                        <div class="absolute inset-0 border-4 border-yoga-500/20 rounded-full"></div>
+                                                        <div class="absolute inset-0 border-4 border-yoga-500 border-t-transparent rounded-full animate-spin"></div>
+                                                    </div>
+                                                    <p class="text-xs uppercase tracking-widest font-bold text-gray-400 animate-pulse">Memuat data booking...</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+
+                                    <!-- Empty State -->
+                                    <template x-if="!loading && filteredBookings.length === 0">
+                                        <tr>
+                                            <td colspan="4" class="px-8 py-20 text-center text-gray-500">
+                                                <div class="flex flex-col items-center justify-center gap-3">
+                                                    <span class="text-4xl">📂</span>
+                                                    <p class="text-sm font-semibold text-gray-400">Tidak ada data booking ditemukan</p>
+                                                    <p class="text-xs text-gray-500">Silakan periksa filter atau kata pencarian Anda</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+
                                     <template x-for="b in filteredBookings" :key="b.id">
                                         <tr class="hover:bg-white/5 transition-all">
                                             <td class="px-8 py-6">
@@ -238,6 +266,7 @@
                 search: '',
                 filter: 'all',
                 lastRefresh: '-',
+                loading: false,
 
                 init() {
                     if (this.isLoggedIn) this.startRefresh();
@@ -259,6 +288,7 @@
                 },
 
                 async fetchData() {
+                    this.loading = true;
                     try {
                         const [bRes, sRes] = await Promise.all([
                             fetch(`${API.URL}?action=admin_bookings`).then(r => r.json()),
@@ -283,6 +313,7 @@
                         }
                         this.lastRefresh = new Date().toLocaleTimeString();
                     } catch (e) { console.error(e); }
+                    finally { this.loading = false; }
                 },
 
                 startRefresh() {
