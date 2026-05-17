@@ -397,6 +397,10 @@ function formatTime12(t) {
   if (t instanceof Date) {
     h = t.getHours();
     m = t.getMinutes();
+  } else if (typeof t === 'string' && t.includes('T')) {
+    const d = new Date(t);
+    h = d.getHours();
+    m = d.getMinutes();
   } else {
     try {
       [h, m] = t.toString().split(':').map(Number);
@@ -434,6 +438,10 @@ function parseT(t) {
   if (t instanceof Date) {
     h = t.getHours();
     m = t.getMinutes();
+  } else if (typeof t === 'string' && t.includes('T')) {
+    const d = new Date(t);
+    h = d.getHours();
+    m = d.getMinutes();
   } else {
     try {
       [h, m] = t.toString().split(':').map(Number);

@@ -179,7 +179,10 @@
                                         <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
                                             <td class="px-8 py-6">
                                                 <p class="font-bold text-yoga-900 dark:text-white" x-text="formatDate(s.date)"></p>
-                                                <p class="text-xs text-yoga-500 dark:text-yoga-400 font-bold uppercase" x-text="s.class_title"></p>
+                                                <p class="text-xs text-yoga-500 dark:text-yoga-400 font-bold uppercase mt-1 flex items-center gap-2">
+                                                    <span x-text="s.class_title"></span>
+                                                    <span x-show="isClassPast(s)" class="bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-bold">Kedaluwarsa</span>
+                                                </p>
                                             </td>
                                             <td class="px-8 py-6 font-mono text-xs text-gray-500" x-text="s.formatted_time"></td>
                                             <td class="px-8 py-6">
@@ -223,7 +226,10 @@
                                 <div class="flex justify-between items-start border-b border-gray-100 dark:border-white/5 pb-4">
                                     <div>
                                         <p class="font-bold text-yoga-900 dark:text-white" x-text="formatDate(s.date)"></p>
-                                        <p class="text-xs text-yoga-500 font-bold uppercase mt-1" x-text="s.class_title"></p>
+                                        <p class="text-xs text-yoga-500 font-bold uppercase mt-1 flex items-center gap-2">
+                                            <span x-text="s.class_title"></span>
+                                            <span x-show="isClassPast(s)" class="bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-bold">Kedaluwarsa</span>
+                                        </p>
                                         <p class="font-mono text-[11px] text-gray-500 mt-2" x-text="s.formatted_time"></p>
                                     </div>
                                     <button @click="showParticipants(s)" class="bg-yoga-50 dark:bg-yoga-500/10 px-3 py-1.5 rounded-full text-[10px] font-bold text-yoga-600 dark:text-yoga-400 flex items-center gap-1.5 shadow-sm border border-yoga-100 dark:border-yoga-500/20">
@@ -738,6 +744,36 @@
                         console.error(e);
                         Swal.fire({ icon: 'error', title: 'Koneksi Gagal', text: 'Tidak dapat menghubungi server API.', background: '#1e293b', color: '#fff' });
                     }
+                },
+
+                // Format Date
+                formatDate(dateString) {
+                    if (!dateString) return '';
+                    const date = new Date(dateString);
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+                },
+
+                // HELPER: Cek Kadaluwarsa
+                isClassPast(sch) {
+                    if (!sch.date) return false;
+                    try {
+                        const schDate = new Date(sch.date);
+                        if (isNaN(schDate.getTime())) return false;
+                        if (sch.end_time) {
+                            const timeStr = sch.end_time.toString();
+                            if (timeStr.includes('T')) {
+                                const parsedTime = new Date(timeStr);
+                                if (!isNaN(parsedTime)) schDate.setHours(parsedTime.getHours(), parsedTime.getMinutes(), 0, 0);
+                            } else {
+                                const timeParts = timeStr.split(':');
+                                if (timeParts.length >= 2) schDate.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), 0, 0);
+                            }
+                        } else {
+                            schDate.setHours(23, 59, 59, 999);
+                        }
+                        return schDate < new Date();
+                    } catch (e) { return false; }
                 }
             }
         }
