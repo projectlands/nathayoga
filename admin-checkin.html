@@ -188,7 +188,7 @@
                         </div>
                     </div>
                     
-                    <button x-show="checkinMode === 'class_qr'" @click="generateToken()" :disabled="!selectedClassId || loading" class="w-full yoga-gradient py-5 rounded-[1.5rem] font-bold text-white shadow-xl shadow-yoga-500/20 active:scale-95 transition-all mt-4 flex items-center justify-center gap-3">
+                    <button x-show="checkinMode === 'class_qr'" @click="generateToken(!!token)" :disabled="!selectedClassId || loading" class="w-full yoga-gradient py-5 rounded-[1.5rem] font-bold text-white shadow-xl shadow-yoga-500/20 active:scale-95 transition-all mt-4 flex items-center justify-center gap-3">
                         <span x-show="loading" class="animate-spin border-2 border-white border-t-transparent rounded-full h-5 w-5"></span>
                         <span x-text="token ? 'Regenerate QR' : 'Generate QR Check-in'"></span>
                     </button>
@@ -401,8 +401,12 @@
                     this.selectedClassTitle = `${cls.title} (${cls.formatted_time})`;
                     this.searchQuery = this.selectedClassTitle;
                     this.dropdownSearchOpen = false;
-                    this.token = ''; // Reset QR code
+                    this.token = ''; // Reset QR code temporarily
                     this.stopAttendanceSync();
+
+                    if (this.checkinMode === 'class_qr') {
+                        this.generateToken(false);
+                    }
                 },
 
                 clearSelection() {
@@ -467,13 +471,13 @@
                     }
                 },
 
-                async generateToken() {
+                async generateToken(isForce = false) {
                     if (!this.selectedClassId) return;
                     this.loading = true;
-                    this.token = ''; // Reset token
+                    if (isForce) this.token = ''; // Reset token
                     
                     try {
-                        const res = await fetch(`${this.apiUrl}?action=generate_token&class_id=${this.selectedClassId}`).then(r => r.json());
+                        const res = await fetch(`${this.apiUrl}?action=generate_token&class_id=${this.selectedClassId}&force=${isForce}`).then(r => r.json());
                         
                         if (res.success) {
                             this.token = res.data.token;

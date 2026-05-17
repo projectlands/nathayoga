@@ -38,7 +38,7 @@ function doGet(e) {
     // CHECK-IN ACTIONS
     if (action === "checkin") return handleCheckin(e.parameter.booking_id);
     if (action === "scan_user") return handleScanUser(e.parameter.booking_id);
-    if (action === "generate_token") return handleGenerateToken(e.parameter.class_id);
+    if (action === "generate_token") return handleGenerateToken(e.parameter.class_id, e.parameter.force);
     if (action === "checkin_self") return handleCheckinSelf(e.parameter.token, e.parameter.phone, e.parameter.booking_id);
     if (action === "attendance_list") return handleAttendanceList(e.parameter.class_id);
 
@@ -496,15 +496,24 @@ function handleGetSettings() {
   return responseJSON({ success: true, data: d });
 }
 
-function handleGenerateToken(classId) {
+function handleGenerateToken(classId, force) {
   if (!classId) return responseJSON({ success: false, message: "Class/Schedule ID required" });
   
+  const cache = CacheService.getScriptCache();
+  
+  if (force !== "true") {
+    const existingToken = cache.get("CLASS_TOKEN_" + classId);
+    if (existingToken) {
+      return responseJSON({ success: true, data: { token: existingToken } });
+    }
+  }
+
   // Generate a random token
   const token = "TOKEN-" + Utilities.getUuid().substring(0, 12).toUpperCase();
   
   // Store the token in script cache for 12 hours (43200 seconds)
-  const cache = CacheService.getScriptCache();
   cache.put(token, classId, 43200);
+  cache.put("CLASS_TOKEN_" + classId, token, 43200);
   
   return responseJSON({ success: true, data: { token: token } });
 }
