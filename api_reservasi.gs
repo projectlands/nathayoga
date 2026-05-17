@@ -319,7 +319,7 @@ function handleDeleteSchedule(id) {
  * --- CORE LOGIC ---
  */
 function createBooking(payload) {
-  const { schedule_id, name, phone, promo_code } = payload;
+  const { schedule_id, name, phone, promo_code, medical_history, consent } = payload;
   const schedules = getSheetData(SHEET_SCHEDULES);
   const schIdx = schedules.findIndex(s => s.id == schedule_id);
   const sch = schedules[schIdx];
@@ -336,7 +336,7 @@ function createBooking(payload) {
   } else { finalPrice = basePrice; }
 
   const booking_id = generateBookingId();
-  SHEET_RESERVATIONS.appendRow([booking_id, sch.class_id, name, "'" + phone, "confirmed", new Date(), "", "pending", promo_code || "", schedule_id]);
+  SHEET_RESERVATIONS.appendRow([booking_id, sch.class_id, name, "'" + phone, "confirmed", new Date(), "", "pending", promo_code || "", schedule_id, medical_history || "Tidak ada", consent ? "Yes" : "No"]);
   SHEET_SCHEDULES.getRange(schIdx + 2, 9).setValue(Number(sch.booked) + 1);
   return responseJSON({ success: true, booking_id, final_price: finalPrice });
 }

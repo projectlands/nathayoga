@@ -429,6 +429,14 @@
                         placeholder="0812...">
                 </div>
 
+                <!-- Medical History Section -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest ml-1 leading-snug">Pernah mempunyai riwayat cidera, penyakit kronis, operasi besar/kecil?</label>
+                    <textarea x-model="formData.medical_history" rows="2"
+                        class="w-full bg-gray-100 dark:bg-dark-900 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-yoga-500 transition-all outline-none text-sm resize-none"
+                        placeholder="Jika ada, sebutkan di sini. Jika tidak, tulis 'Tidak ada' atau kosongkan."></textarea>
+                </div>
+
                 <!-- Promo Section -->
                 <div class="mt-6 pt-6 border-t border-white/5">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Voucher / Promo Code</label>
@@ -442,6 +450,15 @@
                             <span x-text="'- ' + formatPrice(promoDiscount)"></span>
                         </div>
                     </template>
+                </div>
+
+                <!-- Consent Checkbox -->
+                <div class="flex items-start gap-3 mt-6 bg-yoga-50 dark:bg-white/5 p-4 rounded-2xl">
+                    <input type="checkbox" id="consent" x-model="formData.consent" required
+                        class="mt-1 w-4 h-4 text-yoga-500 bg-gray-100 border-gray-300 rounded focus:ring-yoga-500 focus:ring-2 dark:bg-dark-900 dark:border-gray-600">
+                    <label for="consent" class="text-[10px] text-gray-600 dark:text-gray-400 leading-relaxed font-semibold cursor-pointer">
+                        Bersedia di ingatkan oleh admin H-1 dari tanggal booking. Dan jika ada kendala/ingin cancel (karena ada kesibukan mendadak, sakit, dan lain hal) silakan hubungi admin H-1.
+                    </label>
                 </div>
 
                 <div class="pt-4 flex flex-col gap-3">
@@ -501,7 +518,7 @@
                 modalOpen: false,
                 selectedClass: null,
                 bookingLoading: false,
-                formData: { name: '', phone: '' },
+                formData: { name: '', phone: '', medical_history: '', consent: false },
                 searchPhone: '',
                 checkinMode: 'class_qr', // Default
                 promoCode: '',
@@ -593,6 +610,8 @@
 
                 async submitBooking() {
                     if (!this.formData.name || !this.formData.phone) return UI.showAlert('warning', 'Data Kurang', 'Lengkapi nama dan nomor WhatsApp Anda.');
+                    if (!this.formData.consent) return UI.showAlert('warning', 'Persetujuan Diperlukan', 'Anda harus menyetujui kebijakan pengingat H-1 terlebih dahulu.');
+
                     this.bookingLoading = true;
 
                     try {
