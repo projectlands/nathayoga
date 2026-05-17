@@ -149,7 +149,10 @@
                                         </td>
                                         <td class="px-8 py-6 text-sm text-gray-400" x-text="s.room"></td>
                                         <td class="px-8 py-6 text-center">
-                                            <span class="bg-white/5 px-3 py-1 rounded-full text-xs font-bold" x-text="`${s.booked}/${s.quota}`"></span>
+                                            <button @click="showParticipants(s)" class="bg-yoga-500/10 hover:bg-yoga-500/25 border border-yoga-500/20 px-3 py-1 rounded-full text-xs font-bold text-yoga-400 transition-all cursor-pointer flex items-center gap-1.5 mx-auto">
+                                                <span>👥</span>
+                                                <span x-text="`${s.booked}/${s.quota}`"></span>
+                                            </button>
                                         </td>
                                         <td class="px-8 py-6 text-right space-x-2">
                                             <button @click="openModal(s)" class="text-blue-400 hover:bg-blue-400/10 p-2 rounded-lg transition-all">✏️</button>
@@ -397,7 +400,96 @@
                     }
                 },
 
-                formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }); }
+                formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }); },
+
+                async showParticipants(schedule) {
+                    Swal.fire({
+                        title: 'Memuat Peserta...',
+                        text: 'Silakan tunggu sebentar...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        },
+                        background: '#1e293b',
+                        color: '#fff'
+                    });
+
+                    try {
+                        const res = await fetch(`${API.URL}?action=admin_bookings`).then(r => r.json());
+                        if (res.success) {
+                            const participants = res.data.filter(b => b.schedule_id == schedule.id);
+
+                            if (participants.length === 0) {
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: 'Sesi Masih Kosong',
+                                    text: 'Belum ada peserta yang mendaftar di sesi kelas ini.',
+                                    background: '#1e293b',
+                                    color: '#fff',
+                                    confirmButtonColor: '#8b5cf6'
+                                });
+                                return;
+                            }
+
+                            let html = `
+                                <div class="text-left mt-4 max-h-[350px] overflow-y-auto custom-scrollbar pr-1 space-y-3">
+                            `;
+
+                            participants.forEach(p => {
+                                const isPaid = p.payment_status === 'paid';
+                                const paymentBadge = isPaid 
+                                    ? '<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">Paid</span>'
+                                    : '<span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">Pending</span>';
+                                
+                                const isChecked = p.status === 'checked_in';
+                                const checkinBadge = isChecked
+                                    ? '<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">Hadir</span>'
+                                    : '';
+
+                                html += `
+                                    <div class="bg-slate-900/60 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                                        <div class="space-y-1">
+                                            <p class="font-bold text-sm text-white">${p.name}</p>
+                                            <p class="text-xs text-gray-400 flex items-center gap-1">
+                                                <span>📞</span> ${p.phone}
+                                            </p>
+                                        </div>
+                                        <div class="flex flex-col items-end gap-1.5">
+                                            ${paymentBadge}
+                                            ${checkinBadge}
+                                        </div>
+                                    </div>
+                                `;
+                            });
+
+                            html += `</div>`;
+
+                            Swal.fire({
+                                title: schedule.class_title,
+                                html: `
+                                    <div class="text-center text-xs text-gray-400 mb-4 pb-4 border-b border-white/5">
+                                        <p class="font-semibold text-yoga-400">${this.formatDate(schedule.date)}</p>
+                                        <p class="mt-1">${schedule.formatted_time} • ${schedule.instructor} • ${schedule.room}</p>
+                                    </div>
+                                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest text-left">Daftar Peserta (${participants.length})</p>
+                                    ${html}
+                                `,
+                                background: '#1e293b',
+                                color: '#fff',
+                                confirmButtonColor: '#8b5cf6',
+                                confirmButtonText: 'Tutup',
+                                customClass: {
+                                    popup: 'rounded-[2rem]'
+                                }
+                            });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Gagal Memuat', text: res.message || 'Terjadi kesalahan.', background: '#1e293b', color: '#fff' });
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        Swal.fire({ icon: 'error', title: 'Koneksi Gagal', text: 'Tidak dapat menghubungi server API.', background: '#1e293b', color: '#fff' });
+                    }
+                }
             }
         }
     </script>
