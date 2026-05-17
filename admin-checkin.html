@@ -59,7 +59,8 @@
                 <div class="space-y-4">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Nama Kelas</label>
                     <select x-model="selectedClassId" @change="stopAttendanceSync()" class="w-full bg-dark-900 border border-gray-700 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-yoga-500 transition-all outline-none text-sm">
-                        <option value="">-- Pilih Kelas --</option>
+                        <option value="" x-show="!loading">-- Pilih Kelas --</option>
+                        <option value="" x-show="loading">Memuat data sesi kelas...</option>
                         <template x-for="cls in classes" :key="cls.id">
                             <option :value="cls.id" x-text="`${cls.title} (${cls.formatted_time})`"></option>
                         </template>
@@ -156,7 +157,10 @@
                 checkinMode: 'class_qr',
 
                 async init() {
-                    await Promise.all([this.loadSettings(), this.loadClasses()]);
+                    this.loading = true;
+                    try {
+                        await Promise.all([this.loadSettings(), this.loadClasses()]);
+                    } finally { this.loading = false; }
                 },
 
                 async loadSettings() {

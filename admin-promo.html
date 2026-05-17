@@ -130,6 +130,34 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-white/5">
+                                <!-- Loading State -->
+                                <template x-if="loading && promos.length === 0">
+                                    <tr>
+                                        <td colspan="5" class="px-8 py-20 text-center">
+                                            <div class="flex flex-col items-center justify-center gap-4">
+                                                <div class="relative w-12 h-12 flex items-center justify-center">
+                                                    <div class="absolute inset-0 border-4 border-yoga-500/20 rounded-full"></div>
+                                                    <div class="absolute inset-0 border-4 border-yoga-500 border-t-transparent rounded-full animate-spin"></div>
+                                                </div>
+                                                <p class="text-xs uppercase tracking-widest font-bold text-gray-400 animate-pulse">Memuat data promo...</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+
+                                <!-- Empty State -->
+                                <template x-if="!loading && promos.length === 0">
+                                    <tr>
+                                        <td colspan="5" class="px-8 py-20 text-center text-gray-500">
+                                            <div class="flex flex-col items-center justify-center gap-3">
+                                                <span class="text-4xl">📂</span>
+                                                <p class="text-sm font-semibold text-gray-400">Tidak ada kode promo ditemukan</p>
+                                                <p class="text-xs text-gray-500">Silakan tambahkan kode promo baru menggunakan tombol + Create Promo</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+
                                 <template x-for="p in promos" :key="p.id">
                                     <tr class="hover:bg-white/5 transition-all">
                                         <td class="px-8 py-6">
@@ -179,12 +207,16 @@
                 },
 
                 async fetchData() {
-                    const [pRes, sRes] = await Promise.all([
-                        fetch(`${API.URL}?action=promos`).then(r => r.json()),
-                        fetch(`${API.URL}?action=promo_stats`).then(r => r.json())
-                    ]);
-                    if (pRes.success) this.promos = pRes.data;
-                    if (sRes.success) this.stats = sRes.data;
+                    this.loading = true;
+                    try {
+                        const [pRes, sRes] = await Promise.all([
+                            fetch(`${API.URL}?action=promos`).then(r => r.json()),
+                            fetch(`${API.URL}?action=promo_stats`).then(r => r.json())
+                        ]);
+                        if (pRes.success) this.promos = pRes.data;
+                        if (sRes.success) this.stats = sRes.data;
+                    } catch (e) { console.error(e); }
+                    finally { this.loading = false; }
                 },
 
                 async openCreateModal() {

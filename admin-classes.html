@@ -101,6 +101,22 @@
             <main class="flex-1 overflow-y-auto custom-scrollbar p-8">
                 <!-- Class List Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Loading State Grid -->
+                    <div x-show="loading && classes.length === 0" class="col-span-full flex flex-col items-center justify-center py-20">
+                        <div class="relative w-12 h-12 flex items-center justify-center mb-4">
+                            <div class="absolute inset-0 border-4 border-yoga-500/20 rounded-full"></div>
+                            <div class="absolute inset-0 border-4 border-yoga-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                        <p class="text-xs uppercase tracking-widest font-bold text-gray-400 animate-pulse">Memuat data kelas...</p>
+                    </div>
+
+                    <!-- Empty State Grid -->
+                    <div x-show="!loading && classes.filter(c => c.status !== 'deleted').length === 0" class="col-span-full flex flex-col items-center justify-center py-20 text-center text-gray-500">
+                        <span class="text-4xl mb-3">🧘</span>
+                        <p class="text-sm font-semibold text-gray-400">Tidak ada kelas aktif ditemukan</p>
+                        <p class="text-xs text-gray-500">Silakan tambahkan kelas baru menggunakan tombol + Add Class</p>
+                    </div>
+
                     <template x-for="cls in classes" :key="cls.id">
                         <div class="glass rounded-[2rem] overflow-hidden group hover:border-yoga-500/50 transition-all flex flex-col" x-show="cls.status !== 'deleted'">
                             <div class="relative h-48 overflow-hidden">
