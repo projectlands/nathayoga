@@ -507,7 +507,7 @@
         // 3. ALPINE CORE
         function yogaApp() {
             return {
-                view: 'home',
+                view: localStorage.getItem('yoga_view') || 'home',
                 loading: false,
                 isDark: false,
                 isOnline: navigator.onLine,
@@ -528,6 +528,11 @@
                     this.initTheme();
                     this.loadSavedData();
                     this.initPWA();
+
+                    // Watch view changes to remember last opened tab
+                    this.$watch('view', value => {
+                        localStorage.setItem('yoga_view', value);
+                    });
 
                     // Fetch Settings & Classes
                     setTimeout(async () => {
