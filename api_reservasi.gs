@@ -495,3 +495,132 @@ function handleGetSettings() {
   const d = {}; s.getDataRange().getValues().slice(1).forEach(r => d[r[0]] = r[1]);
   return responseJSON({ success: true, data: d });
 }
+
+function handleGenerateToken(classId) {
+  if (!classId) return responseJSON({ success: false, message: "Class/Schedule ID required" });
+  
+  // Generate a random token
+  const token = "TOKEN-" + Utilities.getUuid().substring(0, 12).toUpperCase();
+  
+  // Store the token in script cache for 12 hours (43200 seconds)
+  const cache = CacheService.getScriptCache();
+  cache.put(token, classId, 43200);
+  
+  return responseJSON({ success: true, data: { token: token } });
+}
+
+function handleCheckinSelf(token, phone, bookingId) {
+  if (!token) return responseJSON({ success: false, message: "Token required" });
+  if (!phone) return responseJSON({ success: false, message: "Phone required" });
+  
+  const cache = CacheService.getScriptCache();
+  const classId = cache.get(token);
+  
+  if (!classId) return responseJSON({ success: false, message: "Token kadaluwarsa atau tidak valid. Silakan scan ulang QR Code di studio." });
+  
+  // Find reservation for this user for this class today
+  const sheet = SHEET_RESERVATIONS;
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const colId = headers.indexOf("id");
+  const colClassId = headers.indexOf("class_id");
+  const colPhone = headers.indexOf("phone");
+  const colStatus = headers.indexOf("status");
+  const colCheckinAt = headers.indexOf("checkin_at");
+  const colName = headers.indexOf("name");
+  const colScheduleId = headers.indexOf("schedule_id");
+  
+  const cleanPhone = normalizePhone(phone);
+  let rowIndex = -1;
+  let userName = "";
+  
+  // Look for a confirmed booking for this user today for this class or schedule session
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const rowPhone = normalizePhone(row[colPhone]);
+    const rowClassId = row[colClassId];
+    const rowScheduleId = colScheduleId !== -1 ? row[colScheduleId] : "";
+    const rowStatus = row[colStatus];
+    
+    if (rowPhone === cleanPhone && (rowClassId == classId || rowScheduleId == classId) && rowStatus !== "cancelled") {
+      rowIndex = i;
+      userName = row[colName];
+      break;
+    }
+  }
+  
+  if (rowIndex === -1) {
+    return responseJSON({ success: false, message: "Tidak ada data reservasi kelas hari ini untuk nomor WhatsApp ini." });
+  }
+  
+  // Mark as checked_in and record time
+  sheet.getRange(rowIndex + 1, colStatus + 1).setValue("checked_in");
+  sheet.getRange(rowIndex + 1, colCheckinAt + 1).setValue(new Date());
+  
+  return responseJSON({ success: true, data: { name: userName } });
+}
+
+function handleAttendanceList(classId) {
+  if (!classId) return responseJSON({ success: false, message: "Class/Schedule ID required" });
+  
+  const reservations = getSheetData(SHEET_RESERVATIONS);
+  
+  // Filter reservations for this class today with status = "checked_in"
+  const list = reservations.filter(r => (r.class_id == classId || r.schedule_id == classId) && r.status === "checked_in" && isToday(r.created_at)).map(r => {
+    return {
+      id: r.id,
+      name: r.name,
+      phone: r.phone,
+      checkin_at: r.checkin_at
+    };
+  });
+  
+  return responseJSON({ 
+    success: true, 
+    data: { 
+      total_present: list.length, 
+      list: list 
+    } 
+  });
+}
+
+function handleScanUser(bookingId) {
+  if (!bookingId) return responseJSON({ success: false, message: "Booking ID required" });
+  
+  const sheet = SHEET_RESERVATIONS;
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const colId = headers.indexOf("id");
+  const colClassId = headers.indexOf("class_id");
+  const colName = headers.indexOf("name");
+  const colStatus = headers.indexOf("status");
+  const colCheckinAt = headers.indexOf("checkin_at");
+  
+  const rowIndex = data.findIndex(row => row[colId] === bookingId);
+  if (rowIndex === -1) return responseJSON({ success: false, message: "Booking tidak ditemukan" });
+  
+  const row = data[rowIndex];
+  if (row[colStatus] === "checked_in") return responseJSON({ success: false, message: "Peserta sudah check-in sebelumnya" });
+  if (row[colStatus] === "cancelled") return responseJSON({ success: false, message: "Booking telah dibatalkan" });
+  
+  // Get Class title
+  const classes = getSheetData(SHEET_CLASSES);
+  const cls = classes.find(c => c.id == row[colClassId]);
+  
+  // Check-in user
+  sheet.getRange(rowIndex + 1, colStatus + 1).setValue("checked_in");
+  sheet.getRange(rowIndex + 1, colCheckinAt + 1).setValue(new Date());
+  
+  return responseJSON({ 
+    success: true, 
+    data: { 
+      name: row[colName], 
+      class_title: cls ? cls.title : "Unknown Class",
+      class_time: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "HH:mm")
+    } 
+  });
+}
+
+function handleCheckin(bookingId) {
+  return handleScanUser(bookingId);
+}

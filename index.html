@@ -33,8 +33,23 @@
                 extend: {
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
                     colors: {
-                        yoga: { 50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd', 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9', 800: '#5b21b6', 900: '#4c1d95' },
-                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' }
+                        yoga: {
+                            50: '#fcfaff',
+                            100: '#f5efff',
+                            200: '#ebdfff',
+                            300: '#d7c4ff',
+                            400: '#bfa3ff',
+                            500: '#a78bfa',
+                            600: '#906ef5',
+                            700: '#7853db',
+                            800: '#5f3eb0',
+                            900: '#432685'
+                        },
+                        dark: {
+                            900: '#121016',
+                            800: '#1a1822',
+                            700: '#252230'
+                        }
                     }
                 }
             }
@@ -47,19 +62,19 @@
         }
 
         .glass {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(26, 24, 34, 0.4);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .dark .glass {
-            background: rgba(15, 23, 42, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        .dark .glass {
+            background: rgba(18, 16, 22, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
         .yoga-gradient {
-            background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+            background: linear-gradient(135deg, #bfa3ff 0%, #ffdce3 100%);
         }
 
         .shimmer {
