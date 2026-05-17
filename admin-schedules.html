@@ -196,6 +196,7 @@
                                                 </button>
                                             </td>
                                             <td class="px-8 py-6 text-right space-x-2">
+                                                <button @click="openCheckin(s)" title="Generate QR Check-in" class="text-green-500 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-400/10 p-2 rounded-lg transition-all">📷</button>
                                                 <button @click="openModal(s)" class="text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-400/10 p-2 rounded-lg transition-all">✏️</button>
                                                 <button @click="confirmDelete(s.id)" class="text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-400/10 p-2 rounded-lg transition-all">🗑️</button>
                                             </td>
@@ -243,6 +244,7 @@
                                     </div>
                                 </div>
                                 <div class="pt-4 mt-2 border-t border-gray-100 dark:border-white/5 flex gap-2 justify-end">
+                                    <button @click="openCheckin(s)" class="text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-400/10 px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest font-bold flex items-center gap-1"><span>📷</span> QR</button>
                                     <button @click="openModal(s)" class="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-400/10 px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest font-bold">Edit</button>
                                     <button @click="confirmDelete(s.id)" class="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-400/10 px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest font-bold">Delete</button>
                                 </div>
@@ -540,6 +542,10 @@
                         const res = await fetch(`${API.URL}?action=admin_classes`).then(r => r.json());
                         if (res.success) this.classes = res.data;
                     } catch (e) { console.error("Fetch Classes Error:", e); }
+                },
+
+                openCheckin(s) {
+                    window.location.href = `admin-checkin.html?class_id=${s.id}`;
                 },
 
                 openModal(schedule = null) {

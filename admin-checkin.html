@@ -447,6 +447,18 @@
                     this.loading = true;
                     try {
                         await Promise.all([this.loadSettings(), this.loadClasses()]);
+                        
+                        // Check if navigated from schedules page
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const autoClassId = urlParams.get('class_id');
+                        if (autoClassId && this.classes.length > 0) {
+                            const cls = this.classes.find(c => c.id == autoClassId);
+                            if (cls) {
+                                this.selectClass(cls);
+                                // Optional: remove query string without refreshing to keep URL clean
+                                window.history.replaceState({}, document.title, window.location.pathname);
+                            }
+                        }
                     } finally { this.loading = false; }
                 },
 
