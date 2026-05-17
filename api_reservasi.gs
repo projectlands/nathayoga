@@ -155,7 +155,8 @@ function handleGetAdminBookings() {
       ...r,
       class_title: cls ? cls.title : "Unknown",
       class_date: sch ? formatIndonesianDate(sch.date) : (cls ? formatIndonesianDate(r.created_at) : ""),
-      class_time: sch ? `${formatTime12(sch.start_time)} - ${formatTime12(sch.end_time)}` : ""
+      class_time: sch ? `${formatTime12(sch.start_time)} - ${formatTime12(sch.end_time)}` : "",
+      price: cls ? parsePrice(cls.price) : 0
     };
   }).reverse();
   return responseJSON({ success: true, data: data });
@@ -164,14 +165,29 @@ function handleGetAdminBookings() {
 function handleGetDashboardStats() {
   const reservations = getSheetData(SHEET_RESERVATIONS);
   const classes = getSheetData(SHEET_CLASSES);
+  
+  const paidReservations = reservations.filter(r => r.payment_status === "paid");
+  const pendingReservations = reservations.filter(r => r.payment_status === "pending");
+  
+  const revenue = paidReservations.reduce((acc, r) => {
+     const cls = classes.find(c => c.id == r.class_id);
+     return acc + (cls ? parsePrice(cls.price) : 0);
+  }, 0);
+
+  const pending_revenue = pendingReservations.reduce((acc, r) => {
+     const cls = classes.find(c => c.id == r.class_id);
+     return acc + (cls ? parsePrice(cls.price) : 0);
+  }, 0);
+
   const stats = {
     total_bookings: reservations.length,
-    total_paid: reservations.filter(r => r.payment_status === "paid").length,
-    attendance_today: reservations.filter(r => r.status === "checked_in" && isToday(r.created_at)).length,
-    revenue: reservations.filter(r => r.payment_status === "paid").reduce((acc, r) => {
-       const cls = classes.find(c => c.id == r.class_id);
-       return acc + (cls ? Number(cls.price) : 0);
-    }, 0)
+    total_paid: paidReservations.length,
+    total_pending: pendingReservations.length,
+    revenue: revenue,
+    revenue_est: revenue,
+    revenue_pending: pending_revenue,
+    pending_revenue: pending_revenue,
+    attendance_today: reservations.filter(r => r.status === "checked_in" && isToday(r.created_at)).length
   };
   return responseJSON({ success: true, data: stats });
 }
@@ -311,7 +327,7 @@ function createBooking(payload) {
   
   let finalPrice = 0;
   const cls = getSheetData(SHEET_CLASSES).find(c => c.id == sch.class_id);
-  const basePrice = cls ? Number(cls.price) : 0;
+  const basePrice = cls ? parsePrice(cls.price) : 0;
   if (promo_code) {
     const pRes = handleValidatePromo(promo_code, phone, basePrice);
     const pData = JSON.parse(pRes.getContent());
@@ -338,6 +354,14 @@ function handleValidatePromo(code, phone, amount) {
 /**
  * --- HELPERS ---
  */
+function parsePrice(val) {
+  if (val === undefined || val === null || val === '') return 0;
+  if (typeof val === 'number') return val;
+  const cleaned = val.toString().replace(/[^0-9]/g, '');
+  const parsed = parseInt(cleaned, 10);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
 function getSheetData(sheet) {
   const values = sheet.getDataRange().getValues();
   if (values.length <= 1) return [];

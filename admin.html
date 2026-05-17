@@ -136,6 +136,7 @@
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-yellow-500/10 blur-3xl group-hover:bg-yellow-500/20 transition-all"></div>
                         <p class="text-[10px] font-bold text-yellow-500 uppercase tracking-[0.2em] mb-2">Pending Payment</p>
                         <h3 class="text-4xl font-display font-bold" x-text="stats.total_pending">0</h3>
+                        <p class="text-xs text-gray-400 mt-2" x-show="stats.revenue_pending > 0" x-text="'Est. ' + formatCurrency(stats.revenue_pending)"></p>
                     </div>
                     <div class="glass p-8 rounded-[2.5rem] relative overflow-hidden group">
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-yoga-400/10 blur-3xl group-hover:bg-yoga-400/20 transition-all"></div>
@@ -220,7 +221,7 @@
                 isLoggedIn: localStorage.getItem('yoga_admin_auth') === 'true',
                 password: '',
                 bookings: [],
-                stats: { total_bookings: 0, total_paid: 0, total_pending: 0, revenue_est: 0, attendance_today: 0 },
+                stats: { total_bookings: 0, total_paid: 0, total_pending: 0, revenue_est: 0, revenue_pending: 0, attendance_today: 0 },
                 search: '',
                 filter: 'all',
                 lastRefresh: '-',
@@ -251,7 +252,22 @@
                             fetch(`${API.URL}?action=dashboard_stats`).then(r => r.json())
                         ]);
                         if (bRes.success) this.bookings = bRes.data;
-                        if (sRes.success) this.stats = sRes.data;
+                        if (sRes.success && sRes.data) {
+                            const data = sRes.data;
+                            this.stats = {
+                                total_bookings: data.total_bookings !== undefined ? data.total_bookings : 0,
+                                total_paid: data.total_paid !== undefined ? data.total_paid : 0,
+                                total_pending: data.total_pending !== undefined ? data.total_pending : 0,
+                                revenue_est: data.revenue_est !== undefined ? data.revenue_est : (data.revenue !== undefined ? data.revenue : 0),
+                                revenue_pending: data.revenue_pending !== undefined ? data.revenue_pending : (data.pending_revenue !== undefined ? data.pending_revenue : 0),
+                                attendance_today: data.attendance_today !== undefined ? data.attendance_today : 0
+                            };
+                            
+                            // Safe parsing to prevent NaN values
+                            if (isNaN(this.stats.revenue_est)) this.stats.revenue_est = 0;
+                            if (isNaN(this.stats.total_pending)) this.stats.total_pending = 0;
+                            if (isNaN(this.stats.revenue_pending)) this.stats.revenue_pending = 0;
+                        }
                         this.lastRefresh = new Date().toLocaleTimeString();
                     } catch (e) { console.error(e); }
                 },
