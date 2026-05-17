@@ -309,9 +309,9 @@
                             <div class="flex flex-col items-start md:items-end justify-between gap-4">
                                 <div class="flex flex-wrap md:flex-nowrap items-end gap-2">
                                     <span class="text-[10px] font-bold px-3 py-1 rounded-full border uppercase tracking-wider" :class="res.payment_status === 'paid' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-orange-500/10 text-orange-500 border-orange-500/20'" x-text="res.payment_status === 'paid' ? 'Lunas' : 'Belum Bayar'"></span>
-                                    <span class="text-[10px] font-bold px-3 py-1 rounded-full border uppercase tracking-wider" :class="res.status === 'checked_in' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-gray-500/10 text-gray-500 border-gray-500/20'" x-text="res.status === 'checked_in' ? 'Hadir' : (res.status === 'cancelled' ? 'Dibatalkan' : 'Terkonfirmasi')"></span>
+                                    <span class="text-[10px] font-bold px-3 py-1 rounded-full border uppercase tracking-wider" :class="res.status === 'checked_in' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : (isClassPast(res) ? 'bg-gray-500/10 text-gray-500 border-gray-500/20' : 'bg-green-500/10 text-green-500 border-green-500/20')" x-text="res.status === 'checked_in' ? 'Hadir' : (res.status === 'cancelled' ? 'Dibatalkan' : (isClassPast(res) ? 'Kedaluwarsa' : 'Terkonfirmasi'))"></span>
                                 </div>
-                                <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-3" x-show="!isClassPast(res) || res.status === 'checked_in'">
                                     <button @click="window.open(generateWALink({id: res.id, name: formData.name, class: res.class_title, date: res.class_date, time: res.class_time}, res.price), '_blank')" class="bg-green-500 text-white hover:bg-green-600 px-4 py-2.5 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all flex items-center gap-2 shadow-sm">
                                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.573-.187-.981-.342-1.713-.653-2.836-2.42-2.92-2.531-.083-.111-.698-.927-.698-1.768 0-.841.44-1.25.597-1.42.144-.154.349-.21.53-.21.06 0 .114-.002.164-.002.182 0 .265.011.411.365.187.452.457 1.117.498 1.202.041.084.068.181.015.289-.052.107-.08.172-.156.26-.076.088-.161.189-.226.264-.073.083-.153.172-.061.332.091.159.406.673.87 1.085.6.533 1.109.697 1.265.772.155.074.246.062.338-.044.092-.107.397-.461.503-.618.106-.157.212-.132.355-.08.143.053.904.426 1.059.504.155.078.258.117.296.182.038.064.038.374-.106.779z"/></svg> Konfirmasi
                                     </button>
@@ -738,6 +738,8 @@
                             const now = new Date();
                             this.classes = res.data.filter(sch => {
                                 const schDate = new Date(sch.date);
+                                if (isNaN(schDate.getTime())) return true; // Safety check
+
                                 if (sch.end_time) {
                                     const timeStr = sch.end_time.toString();
                                     if (timeStr.includes('T')) {
@@ -923,6 +925,28 @@
 
                 get totalSessions() {
                     return this.classes.filter(s => s.status === 'active').length || 0;
+                },
+
+                // HELPER: Check if a booked class has passed
+                isClassPast(res) {
+                    if (!res.sch_raw_date) return false;
+                    try {
+                        const schDate = new Date(res.sch_raw_date);
+                        if (isNaN(schDate.getTime())) return false;
+                        if (res.sch_raw_end_time) {
+                            const timeStr = res.sch_raw_end_time.toString();
+                            if (timeStr.includes('T')) {
+                                const parsedTime = new Date(timeStr);
+                                if (!isNaN(parsedTime)) schDate.setHours(parsedTime.getHours(), parsedTime.getMinutes(), 0, 0);
+                            } else {
+                                const timeParts = timeStr.split(':');
+                                if (timeParts.length >= 2) schDate.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), 0, 0);
+                            }
+                        } else {
+                            schDate.setHours(23, 59, 59, 999);
+                        }
+                        return schDate < new Date();
+                    } catch (e) { return false; }
                 }
             }
         }

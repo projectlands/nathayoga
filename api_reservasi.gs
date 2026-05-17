@@ -135,7 +135,9 @@ function getMyBookings(phone) {
       class_title: cls ? cls.title : "Unknown",
       class_date: sch ? formatIndonesianDate(sch.date) : (cls ? formatIndonesianDate(r.created_at) : ""),
       class_time: sch ? `${formatTime12(sch.start_time)} - ${formatTime12(sch.end_time)}` : "",
-      price: cls ? parsePrice(cls.price) : 0
+      price: cls ? parsePrice(cls.price) : 0,
+      sch_raw_date: sch ? sch.date : "",
+      sch_raw_end_time: sch ? sch.end_time : ""
     };
   });
   return responseJSON({ success: true, data: detailed });

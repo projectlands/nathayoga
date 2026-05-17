@@ -3,12 +3,7 @@ const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
-  'https://cdn.tailwindcss.com',
-  'https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js',
-  'https://cdn.jsdelivr.net/npm/sweetalert2@11',
-  'https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js',
-  'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap',
-  'https://cdn-icons-png.flaticon.com/512/3048/3048383.png'
+  './logo.jpg'
 ];
 
 // Install Event
