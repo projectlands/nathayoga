@@ -315,6 +315,59 @@
             </div>
         </div>
 
+        <!-- VIEW: MEMBERSHIP -->
+        <div x-show="view === 'membership'" class="px-4 page-enter">
+            <div class="max-w-xl mx-auto">
+                <header class="mb-8 pt-4">
+                    <h2 class="text-3xl font-display font-bold">My Membership</h2>
+                    <p class="text-gray-400 text-xs">Kelola paket dan sesi yoga Anda</p>
+                </header>
+
+                <template x-if="!formData.phone && !searchPhone">
+                    <div class="glass p-8 rounded-[2.5rem] text-center mb-6">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Masukkan nomor WhatsApp Anda untuk melihat membership aktif</p>
+                        <div class="flex gap-2">
+                            <input type="tel" x-model="searchPhone" placeholder="0812..." class="flex-1 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-yoga-500 transition-all">
+                            <button @click="loadMemberships()" class="bg-yoga-500 text-white px-6 rounded-2xl font-bold">Cek</button>
+                        </div>
+                    </div>
+                </template>
+
+                <template x-if="memberships.length > 0">
+                    <div class="space-y-4 mb-6">
+                        <template x-for="m in memberships" :key="m.id">
+                            <div class="glass p-6 rounded-[2rem] border-l-4 border-l-yoga-500 flex flex-col md:flex-row justify-between gap-6 shadow-soft bg-white dark:bg-dark-800 transition-all hover:shadow-glow cursor-pointer relative overflow-hidden" @click="showMembershipInfo(m)">
+                                <div>
+                                    <span class="text-[10px] font-bold text-yoga-500 uppercase tracking-widest block mb-1"
+                                        x-text="m.membership_type === 'session' ? 'Session Package' : 'Unlimited Member'"></span>
+                                    <h4 class="text-lg font-bold leading-tight mb-2 text-yoga-900 dark:text-white font-display" x-text="m.package_title"></h4>
+                                    <div class="flex flex-col gap-1">
+                                        <p class="text-xs text-gray-500">Berlaku s/d: <span class="font-bold" x-text="formatDate(m.expired_at)"></span></p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-start md:items-end justify-between gap-4">
+                                    <span class="bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400 text-[10px] font-bold px-3 py-1 rounded-full" x-text="m.status"></span>
+                                    <div class="bg-yoga-50 dark:bg-dark-700 px-3 py-1.5 rounded-xl flex items-center gap-2">
+                                        <span class="text-[10px] text-gray-500 uppercase font-bold">Sisa</span>
+                                        <span class="text-sm font-bold text-yoga-600" x-text="m.membership_type === 'session' ? m.remaining_sessions : '∞'"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template x-if="(formData.phone || searchPhone) && memberships.length === 0 && !loading">
+                    <div class="py-20 text-center glass rounded-[2.5rem] mb-6">
+                        <div class="w-20 h-20 bg-yoga-50 dark:bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-6 shadow-soft text-3xl">🧘</div>
+                        <h3 class="text-xl font-bold mb-2 font-display text-yoga-900 dark:text-white">Belum ada paket aktif</h3>
+                        <p class="text-gray-500 text-sm max-w-xs mx-auto mb-8">Anda belum memiliki membership aktif. Silakan hubungi admin untuk aktivasi paket.</p>
+                        <a href="https://wa.me/6282247338792" target="_blank" class="yoga-gradient px-8 py-4 rounded-full font-bold text-white text-sm inline-block shadow-glow hover:scale-105 transition-all">Beli Paket Membership</a>
+                    </div>
+                </template>
+            </div>
+        </div>
+
         <!-- VIEW: PROFILE (PWA INSTALL) -->
         <div x-show="view === 'profile'" class="px-4 page-enter">
             <div class="max-w-xl mx-auto">
@@ -377,13 +430,13 @@
                 </div>
                 <span class="text-[9px] font-bold" x-show="view === 'classes'">Classes</span>
             </button>
-            <a href="membership.html" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all"
+            <button @click="view = 'membership'; loadMemberships()" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all"
                 :class="view === 'membership' ? 'text-yoga-500 -translate-y-2' : 'text-gray-400 hover:text-yoga-500'">
                 <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors" :class="view === 'membership' ? 'yoga-gradient shadow-glow text-white' : ''">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                 </div>
                 <span class="text-[9px] font-bold" x-show="view === 'membership'">Member</span>
-            </a>
+            </button>
             <button @click="view = 'my-bookings'; checkMyBookings()" class="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all"
                 :class="view === 'my-bookings' ? 'text-yoga-500 -translate-y-2' : 'text-gray-400 hover:text-yoga-500'">
                 <div class="w-10 h-10 flex items-center justify-center rounded-full mb-0.5 transition-colors" :class="view === 'my-bookings' ? 'yoga-gradient shadow-glow text-white' : ''">
@@ -515,6 +568,7 @@
                 deferredPrompt: null,
                 classes: [],
                 myBookings: [],
+                memberships: [],
                 modalOpen: false,
                 selectedClass: null,
                 bookingLoading: false,
@@ -528,6 +582,10 @@
                     this.initTheme();
                     this.loadSavedData();
                     this.initPWA();
+                    
+                    if (this.view === 'membership') {
+                        this.loadMemberships();
+                    }
 
                     // Watch view changes to remember last opened tab
                     this.$watch('view', value => {
@@ -546,6 +604,50 @@
                     window.addEventListener('nav', (e) => {
                         this.view = e.detail;
                         Swal.close();
+                    });
+                },
+
+                async loadMemberships() {
+                    const phoneToUse = this.formData.phone || this.searchPhone;
+                    if (!phoneToUse) return;
+                    
+                    this.loading = true;
+                    try {
+                        const res = await APP_API.fetch('user_memberships', `&phone=${phoneToUse.replace(/[^0-9]/g, "")}`);
+                        if (res.success) {
+                            this.memberships = res.data;
+                            if (this.searchPhone && !this.formData.phone) {
+                                this.formData.phone = this.searchPhone;
+                                localStorage.setItem('yoga_phone', this.searchPhone);
+                            }
+                        }
+                    } catch (e) {
+                        UI.showAlert('error', 'Koneksi Gagal', 'Gagal memuat data membership.');
+                    } finally { this.loading = false; }
+                },
+
+                showMembershipInfo(m) {
+                    Swal.fire({
+                        title: m.package_title,
+                        html: `
+                            <div class="text-left space-y-4 text-sm mt-4">
+                                <div class="flex justify-between border-b border-gray-200 dark:border-white/5 pb-2">
+                                    <span class="text-gray-500 dark:text-gray-400">Dimulai Pada</span>
+                                    <span class="font-bold text-gray-900 dark:text-white">${this.formatDate(m.started_at)}</span>
+                                </div>
+                                <div class="flex justify-between border-b border-gray-200 dark:border-white/5 pb-2">
+                                    <span class="text-gray-500 dark:text-gray-400">ID Member</span>
+                                    <span class="font-bold text-gray-900 dark:text-white">${m.id}</span>
+                                </div>
+                                <div class="bg-yoga-500/10 p-4 rounded-xl text-yoga-500 dark:text-yoga-400 text-xs italic">
+                                    Sesi akan otomatis terpotong setiap kali Anda melakukan booking kelas melalui sistem.
+                                </div>
+                            </div>
+                        `,
+                        background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#fff',
+                        color: document.documentElement.classList.contains('dark') ? '#fff' : '#0f172a',
+                        confirmButtonColor: '#8b5cf6',
+                        customClass: { popup: 'rounded-[2.5rem] border-none shadow-2xl', confirmButton: 'rounded-2xl px-10 py-4 font-bold' }
                     });
                 },
 
