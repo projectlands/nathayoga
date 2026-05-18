@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - demo # Memantau kedua branch ini
+      - demo
 
 permissions:
   contents: write
@@ -20,9 +20,9 @@ jobs:
       - name: Deploy Main Site
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: . # Mengambil seluruh isi root folder di branch main
-          branch: gh-pages # Hasilnya dikirim ke branch khusus gh-pages
-          target-folder: . # Ditaruh di halaman utama website
+          folder: .
+          branch: gh-pages
+          target-folder: .
 
   deploy-demo:
     if: github.ref == 'refs/heads/demo'
@@ -34,6 +34,6 @@ jobs:
       - name: Deploy Demo Site
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: . # Mengambil seluruh isi root folder di branch demo
-          branch: gh-pages # Hasilnya dikirim ke branch khusus gh-pages
-          target-folder: demo # Otomatis dimasukkan ke sub-folder bernama 'demo'
+          folder: .
+          branch: gh-pages
+          target-folder: demo
